@@ -19,10 +19,9 @@ from schemas.Link import Link
 
 # given user prompt and schema, generate a task following the schema Task
 # infer inputs and outputs, generate links following the schema Link
-def generate_task(prompt: str, task_type: str, schema: Dict):
+def generate_task(prompt: str, schema: Dict):
     """
     Generate a task following the schema
-    :param prompt: str
     :param task_type: str
     :param schema: Dict
     :return: str
