@@ -43,7 +43,7 @@ def generate_task(prompt: str, schema: Dict):
     print(task_json_string)
 
     messages.append({"role": "assistant", "content": task_json_string})
-    messages.append({"role": "user", "content": "Given the task JSON:" + task_json_string + "\nreturn a list of independent subtasks. Each subtask should be JSON formatted as follows:\n" + schema_string + "\n\nOnly output the subtasks and nothing else."})
+    messages.append({"role": "user", "content": "Given the task JSON:" + task_json_string + "\nreturn a list of 3 independent subtasks. Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n" + schema_string + "\n\nOnly output the subtasks and nothing else."})
 
     response = client.chat.completions.create(
         model="sonar-pro",
@@ -57,17 +57,25 @@ def generate_task(prompt: str, schema: Dict):
     subtasks_json_string = response.choices[0].message.content
 
     subtasks = json.loads(subtasks_json_string)
-    selected_tools = []
+    print(subtasks_json_string)
+    selected_tools = {}
     for subtask in subtasks:
-        message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nWhat is the best tool to solve this problem:\nA) LLM only\nB) code only\nC) mix of the two\n\nOnly output the selected option letter and nothing else."}
+        # message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nWhat is the best tool to solve this problem:\nA) LLM only\nB) code only\nC) mix of the two\n\nOnly output the selected option letter and nothing else."}
+        message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nIs this too vague to implement as written?:\nA) Yes\nB) No\n\nOnly output the selected option letter and nothing else."}
         response = client.chat.completions.create(
             model="sonar-pro",
             messages=messages+[message],
             max_tokens=50
         )
         # TODO: output checking
-        selected_tools.append(response.choices[0].message.content)
-
-    print(selected_tools)
+        selected_tools[subtask["task_id"]] = response.choices[0].message.content
+        print(subtask["task_id"], selected_tools[subtask["task_id"]])
+        if selected_tools[subtask["task_id"]] == "A":
+            print("Generating task: " + subtask["task_description"])
+            generate_task(subtask["task_description"], schema)
+    main_task = json.loads(task_json_string)
+    main_task["subtasks"] = subtasks
+    return main_task
 prompt = input("Enter a prompt: ")
-generate_task(prompt, Task.model_json_schema())
+full_task = generate_task(prompt, Task.model_json_schema())
+print(json.dumps(full_task, indent=4))
