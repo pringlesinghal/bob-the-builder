@@ -2,6 +2,7 @@ from openai import OpenAI
 import json
 from dotenv import load_dotenv
 import os
+from typing import Dict
 load_dotenv()
 
 PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
@@ -18,7 +19,14 @@ from schemas.Link import Link
 
 # given user prompt and schema, generate a task following the schema Task
 # infer inputs and outputs, generate links following the schema Link
-def generate_task(prompt, schema):
+def generate_task(prompt: str, task_type: str, schema: Dict):
+    """
+    Generate a task following the schema
+    :param prompt: str
+    :param task_type: str
+    :param schema: Dict
+    :return: str
+    """
     schema_string = json.dumps(schema)
     messages = [
         {"role": "system", "content": "You are a helpful assistant."},
@@ -28,8 +36,9 @@ def generate_task(prompt, schema):
     response = client.chat.completions.create(
         model="sonar-pro",
         messages=messages,
-        max_tokens=1000
+        max_tokens=2000
     )
+    # TODO: output checking
 
     task_json_string = response.choices[0].message.content
     print(task_json_string)
@@ -40,11 +49,26 @@ def generate_task(prompt, schema):
     response = client.chat.completions.create(
         model="sonar-pro",
         messages=messages,
-        max_tokens=1000
+        max_tokens=2000
     )
+    # TODO: output checking
+
+    messages.append({"role": "assistant", "content": response.choices[0].message.content})
 
     subtasks_json_string = response.choices[0].message.content
-    print(subtasks_json_string)
 
+    subtasks = json.loads(subtasks_json_string)
+    selected_tools = []
+    for subtask in subtasks:
+        message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nWhat is the best tool to solve this problem:\nA) LLM only\nB) code only\nC) mix of the two\n\nOnly output the selected option letter and nothing else."}
+        response = client.chat.completions.create(
+            model="sonar-pro",
+            messages=messages+[message],
+            max_tokens=50
+        )
+        # TODO: output checking
+        selected_tools.append(response.choices[0].message.content)
+
+    print(selected_tools)
 prompt = input("Enter a prompt: ")
 generate_task(prompt, Task.model_json_schema())

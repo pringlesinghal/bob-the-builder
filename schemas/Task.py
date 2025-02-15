@@ -1,14 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Any
 
 from .Link import Link
 class Task(BaseModel):
-    id: int
-    name: str
-    description: str
-    input: List[Link]
-    output: List[Link]
-    completed: bool
+    task_id: int = Field(default=0, description="each task should have a unique id")
+    task_name: str = Field(description="name of the task")
+    task_description: str = Field(description="description of the task")
+    input: List[Link] = Field(description="list of inputs to the task")
+    output: List[Link] = Field(description="list of outputs from the task")
+    completed: bool = Field(description="whether the task is completed")
 
 if __name__ == "__main__":
     # Generate JSON schema
