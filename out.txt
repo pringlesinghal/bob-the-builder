@@ -1,889 +1,281 @@
 {
-    "task_id": 0,
-    "task_name": "Find and Book Soccer Event in San Francisco",
-    "task_description": "Search for soccer-related events in San Francisco for tomorrow and book a ticket for one of them.",
-    "input": [
-        {
-            "link_id": 0,
-            "link_name": "current_date",
-            "link_description": "The current date to determine 'tomorrow'",
-            "data_type": "datetime",
-            "data_source_type": "api",
-            "output_by_task_name": "Get Current Date",
-            "output_by_task_id": 1
-        }
-    ],
-    "output": [
-        {
-            "link_id": 1,
-            "link_name": "booked_event",
-            "link_description": "Details of the booked soccer event",
-            "data_type": "dict",
-            "data_source_type": "api",
-            "output_by_task_name": "Find and Book Soccer Event in San Francisco",
-            "output_by_task_id": 0
-        }
-    ],
-    "completed": false,
+    "task_id": "blender_us_presidents_heads",
+    "task_name": "Create Blender models of the heads of the three most recent US presidents",
+    "task_description": "Using Blender, create 3D head models of the three most recent US presidents, ensuring accuracy and detail in the representations.",
     "subtasks": [
         {
-            "task_id": 1,
-            "task_name": "Determine Tomorrow's Date",
-            "task_description": "Calculate tomorrow's date based on the current date input",
-            "input": [
+            "task_id": "research_recent_presidents",
+            "task_name": "Research Recent US Presidents",
+            "task_description": "Research and list the names of the three most recent US presidents as of the current date (February 15, 2025).",
+            "dependencies": [],
+            "produces": [
                 {
-                    "link_id": 0,
-                    "link_name": "current_date",
-                    "link_description": "The current date to determine 'tomorrow'",
-                    "data_type": "datetime",
-                    "data_source_type": "api",
-                    "output_by_task_name": "Get Current Date",
-                    "output_by_task_id": 1
-                }
-            ],
-            "output": [
-                {
-                    "link_id": 1,
-                    "link_name": "tomorrow_date",
-                    "link_description": "The date for tomorrow",
-                    "data_type": "datetime",
-                    "data_source_type": "other task",
-                    "output_by_task_name": "Determine Tomorrow's Date",
-                    "output_by_task_id": 1
-                }
-            ],
-            "completed": false
-        },
-        {
-            "task_id": 2,
-            "task_name": "Search Soccer Events",
-            "task_description": "Search for soccer-related events in San Francisco for tomorrow",
-            "input": [
-                {
-                    "link_id": 1,
-                    "link_name": "tomorrow_date",
-                    "link_description": "The date for tomorrow",
-                    "data_type": "datetime",
-                    "data_source_type": "other task",
-                    "output_by_task_name": "Determine Tomorrow's Date",
-                    "output_by_task_id": 1
-                }
-            ],
-            "output": [
-                {
-                    "link_id": 2,
-                    "link_name": "soccer_events",
-                    "link_description": "List of soccer events in San Francisco for tomorrow",
+                    "link_id": "recent_presidents_list",
+                    "link_name": "Recent US Presidents List",
+                    "link_description": "A list containing the names of the three most recent US presidents",
                     "data_type": "list",
-                    "data_source_type": "api",
-                    "output_by_task_name": "Search Soccer Events",
-                    "output_by_task_id": 2
+                    "data_source_type": "task",
+                    "value": null
                 }
             ],
-            "completed": false
-        },
-        {
-            "task_id": 3,
-            "task_name": "Select Event",
-            "task_description": "Choose a soccer event from the list of available events",
-            "input": [
+            "subtasks": [
                 {
-                    "link_id": 2,
-                    "link_name": "soccer_events",
-                    "link_description": "List of soccer events in San Francisco for tomorrow",
-                    "data_type": "list",
-                    "data_source_type": "api",
-                    "output_by_task_name": "Search Soccer Events",
-                    "output_by_task_id": 2
-                }
-            ],
-            "output": [
-                {
-                    "link_id": 3,
-                    "link_name": "selected_event",
-                    "link_description": "The chosen soccer event",
-                    "data_type": "dict",
-                    "data_source_type": "other task",
-                    "output_by_task_name": "Select Event",
-                    "output_by_task_id": 3
-                }
-            ],
-            "completed": false
-        },
-        {
-            "task_id": 0,
-            "task_name": "Book Soccer Event Ticket",
-            "task_description": "Book a ticket for the selected soccer event",
-            "input": [
-                {
-                    "link_id": 0,
-                    "link_name": "selected_event",
-                    "link_description": "The soccer event selected by the user",
-                    "data_type": "dict",
-                    "data_source_type": "other task",
-                    "output_by_task_name": "Select Soccer Event",
-                    "output_by_task_id": 0
-                }
-            ],
-            "output": [
-                {
-                    "link_id": 0,
-                    "link_name": "booking_confirmation",
-                    "link_description": "Confirmation details of the booked ticket",
-                    "data_type": "dict",
-                    "data_source_type": "api",
-                    "output_by_task_name": "Book Soccer Event Ticket",
-                    "output_by_task_id": 0
+                    "task_id": "determine_current_president_2025",
+                    "task_name": "Determine Current US President as of February 15, 2025",
+                    "task_description": "Research and identify who is serving as the President of the United States on February 15, 2025.",
+                    "dependencies": [],
+                    "produces": [],
+                    "subtasks": [
+                        {
+                            "task_id": "research_recent_us_election",
+                            "task_name": "Research Most Recent US Presidential Election Date",
+                            "task_description": "Research and identify the date of the most recent US presidential election that occurred prior to February 15, 2025.",
+                            "dependencies": [],
+                            "produces": [],
+                            "subtasks": [
+                                {
+                                    "task_id": "find_reliable_sources_recent_us_election",
+                                    "task_name": "Find Reliable Sources on Recent US Presidential Election",
+                                    "task_description": "Identify and compile reliable sources containing information about the most recent US presidential election cycle that occurred prior to February 15, 2025. Focus on reputable news outlets, government websites, and academic institutions for accurate and comprehensive information.",
+                                    "dependencies": [],
+                                    "produces": [
+                                        {
+                                            "link_id": "reliable_sources_list",
+                                            "link_name": "List of Reliable Sources",
+                                            "link_description": "A curated list of reliable sources with information about the most recent US presidential election cycle prior to February 15, 2025",
+                                            "data_type": "list",
+                                            "data_source_type": "task"
+                                        }
+                                    ],
+                                    "subtasks": [
+                                        {
+                                            "task_id": "compile_official_election_resources",
+                                            "task_name": "Compile Official Government Resources for Recent US Presidential Election",
+                                            "task_description": "Research and compile a list of official government websites and resources that provide reliable information about the most recent US presidential election. Focus on authoritative sources such as federal election commissions, state election boards, and official government archives.",
+                                            "dependencies": [],
+                                            "produces": [
+                                                {
+                                                    "link_id": "official_election_resources_list",
+                                                    "link_name": "List of Official Election Resources",
+                                                    "link_description": "A comprehensive list of official government websites and resources providing reliable information about the most recent US presidential election",
+                                                    "data_type": "list",
+                                                    "data_source_type": "task"
+                                                }
+                                            ],
+                                            "subtasks": [
+                                                {
+                                                    "task_id": "compile_federal_election_resources",
+                                                    "task_name": "Compile Official Federal Election Resources",
+                                                    "task_description": "Research and compile a list of official federal government websites and resources that provide reliable information about the most recent US presidential election, focusing on sources such as the Federal Election Commission, Election Assistance Commission, and other relevant federal agencies.",
+                                                    "subtasks": [
+                                                        {
+                                                            "task_id": "FEC_presidential_election_resources",
+                                                            "task_name": "Compile FEC resources for recent US presidential election",
+                                                            "task_description": "Identify and compile a list of relevant resources from the Federal Election Commission (FEC) website related to the most recent US presidential election, including official reports, data, and guidance documents.",
+                                                            "subtasks": [
+                                                                {
+                                                                    "task_id": "search_fec_certified_results",
+                                                                    "task_name": "Search FEC Website for Certified Presidential Election Results",
+                                                                    "task_description": "Navigate to the Federal Election Commission (FEC) website and locate the official page containing certified results of the most recent presidential election.",
+                                                                    "dependencies": [],
+                                                                    "produces": [
+                                                                        {
+                                                                            "link_id": "fec_certified_results_page",
+                                                                            "link_name": "FEC Certified Presidential Election Results Page",
+                                                                            "link_description": "Official FEC webpage containing certified results of the most recent presidential election",
+                                                                            "data_type": "string",
+                                                                            "data_source_type": "url",
+                                                                            "value": null
+                                                                        }
+                                                                    ],
+                                                                    "subtasks": [
+                                                                        {
+                                                                            "task_id": "open_fec_website",
+                                                                            "task_name": "Open FEC Website",
+                                                                            "task_description": "Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov.",
+                                                                            "dependencies": [],
+                                                                            "produces": [],
+                                                                            "subtasks": [
+                                                                                {
+                                                                                    "task_id": "open_fec_website",
+                                                                                    "task_name": "Open FEC Website",
+                                                                                    "task_description": "Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov.",
+                                                                                    "dependencies": [],
+                                                                                    "produces": [],
+                                                                                    "completed": false,
+                                                                                    "selected_tool": "C",
+                                                                                    "depth": 10,
+                                                                                    "subtasks": [
+                                                                                        {
+                                                                                            "task_id": "open_web_browser",
+                                                                                            "task_name": "Open Web Browser",
+                                                                                            "task_description": "Open a web browser application on the computer",
+                                                                                            "dependencies": [],
+                                                                                            "produces": [],
+                                                                                            "subtasks": [
+                                                                                                {
+                                                                                                    "task_id": "start_default_browser",
+                                                                                                    "task_name": "Start Default Web Browser",
+                                                                                                    "task_description": "Launch the default web browser application on the computer",
+                                                                                                    "dependencies": [],
+                                                                                                    "produces": [],
+                                                                                                    "subtasks": [
+                                                                                                        {
+                                                                                                            "task_id": "identify_default_browser",
+                                                                                                            "task_name": "Identify Default Web Browser",
+                                                                                                            "task_description": "Determine the current default web browser application set on the computer.",
+                                                                                                            "dependencies": [],
+                                                                                                            "produces": [],
+                                                                                                            "completed": false,
+                                                                                                            "selected_tool": "B",
+                                                                                                            "depth": 13,
+                                                                                                            "subtasks": [
+                                                                                                                {
+                                                                                                                    "task_id": "access_system_settings_for_browser_config",
+                                                                                                                    "task_name": "Access System Settings for Default Browser Configuration",
+                                                                                                                    "task_description": "Navigate to the system settings or control panel to view the current default web browser configuration on the computer.",
+                                                                                                                    "dependencies": [],
+                                                                                                                    "produces": [
+                                                                                                                        {
+                                                                                                                            "link_id": "default_browser_info",
+                                                                                                                            "link_name": "Default Browser Information",
+                                                                                                                            "link_description": "Information about the currently set default web browser on the system",
+                                                                                                                            "data_type": "string",
+                                                                                                                            "data_source_type": "task"
+                                                                                                                        }
+                                                                                                                    ],
+                                                                                                                    "subtasks": [
+                                                                                                                        {
+                                                                                                                            "task_id": "launch_system_settings",
+                                                                                                                            "task_name": "Launch System Settings or Control Panel",
+                                                                                                                            "task_description": "Open the system settings or control panel application on the computer. This can typically be done by searching for 'Settings' or 'Control Panel' in the Start menu or using keyboard shortcuts like Windows key + I for Windows Settings.",
+                                                                                                                            "dependencies": [],
+                                                                                                                            "produces": [],
+                                                                                                                            "subtasks": [
+                                                                                                                                {
+                                                                                                                                    "task_id": "open_start_menu_and_search",
+                                                                                                                                    "task_name": "Open Start Menu and Search for Settings or Control Panel",
+                                                                                                                                    "task_description": "Open the Start menu and search for either 'Settings' or 'Control Panel' to access system configuration options.",
+                                                                                                                                    "dependencies": [],
+                                                                                                                                    "produces": [],
+                                                                                                                                    "subtasks": [
+                                                                                                                                        {
+                                                                                                                                            "task_id": "open_start_menu",
+                                                                                                                                            "task_name": "Open the Start menu",
+                                                                                                                                            "task_description": "Open the Start menu using either the Start button or the Windows key",
+                                                                                                                                            "subtasks": [
+                                                                                                                                                {
+                                                                                                                                                    "task_id": "locate_click_start_button",
+                                                                                                                                                    "task_name": "Locate and click the Start button",
+                                                                                                                                                    "task_description": "Find the Start button, typically located in the bottom-left corner of the screen, and click on it to open the Start menu.",
+                                                                                                                                                    "dependencies": [],
+                                                                                                                                                    "produces": [],
+                                                                                                                                                    "subtasks": [
+                                                                                                                                                        {
+                                                                                                                                                            "task_id": "find_start_button",
+                                                                                                                                                            "task_name": "Find the Start button",
+                                                                                                                                                            "task_description": "Locate the Start button on the screen. It is typically found in the bottom-left corner of the screen or centered on the taskbar, depending on your Windows settings.",
+                                                                                                                                                            "completed": false,
+                                                                                                                                                            "selected_tool": "B",
+                                                                                                                                                            "depth": 19
+                                                                                                                                                        }
+                                                                                                                                                    ],
+                                                                                                                                                    "completed": false,
+                                                                                                                                                    "selected_tool": "B",
+                                                                                                                                                    "depth": 18,
+                                                                                                                                                    "result": "Result of executing task: Find the Start button, typically located in the bottom-left corner of the screen, and click on it to open the Start menu."
+                                                                                                                                                }
+                                                                                                                                            ],
+                                                                                                                                            "completed": false,
+                                                                                                                                            "selected_tool": "B",
+                                                                                                                                            "depth": 17,
+                                                                                                                                            "result": "Result of executing task: Open the Start menu using either the Start button or the Windows key"
+                                                                                                                                        }
+                                                                                                                                    ],
+                                                                                                                                    "completed": false,
+                                                                                                                                    "selected_tool": "B",
+                                                                                                                                    "depth": 16,
+                                                                                                                                    "result": "Result of executing task: Open the Start menu and search for either 'Settings' or 'Control Panel' to access system configuration options."
+                                                                                                                                }
+                                                                                                                            ],
+                                                                                                                            "completed": false,
+                                                                                                                            "selected_tool": "B",
+                                                                                                                            "depth": 15,
+                                                                                                                            "result": "Result of executing task: Open the system settings or control panel application on the computer. This can typically be done by searching for 'Settings' or 'Control Panel' in the Start menu or using keyboard shortcuts like Windows key + I for Windows Settings."
+                                                                                                                        }
+                                                                                                                    ],
+                                                                                                                    "completed": false,
+                                                                                                                    "selected_tool": "B",
+                                                                                                                    "depth": 14,
+                                                                                                                    "result": "Result of executing task: Navigate to the system settings or control panel to view the current default web browser configuration on the computer."
+                                                                                                                }
+                                                                                                            ],
+                                                                                                            "result": "Result of executing task: Determine the current default web browser application set on the computer."
+                                                                                                        }
+                                                                                                    ],
+                                                                                                    "completed": false,
+                                                                                                    "selected_tool": "B",
+                                                                                                    "depth": 12,
+                                                                                                    "result": "Result of executing task: Launch the default web browser application on the computer"
+                                                                                                }
+                                                                                            ],
+                                                                                            "completed": false,
+                                                                                            "selected_tool": "B",
+                                                                                            "depth": 11,
+                                                                                            "result": "Result of executing task: Open a web browser application on the computer"
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ],
+                                                                            "completed": false,
+                                                                            "selected_tool": "C",
+                                                                            "depth": 9,
+                                                                            "result": "Result of executing task: Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov."
+                                                                        }
+                                                                    ],
+                                                                    "completed": false,
+                                                                    "selected_tool": "D",
+                                                                    "depth": 8
+                                                                }
+                                                            ],
+                                                            "selected_tool": "D",
+                                                            "depth": 7,
+                                                            "result": "Result of executing task: Identify and compile a list of relevant resources from the Federal Election Commission (FEC) website related to the most recent US presidential election, including official reports, data, and guidance documents."
+                                                        }
+                                                    ],
+                                                    "selected_tool": "D",
+                                                    "depth": 6,
+                                                    "result": "Result of executing task: Research and compile a list of official federal government websites and resources that provide reliable information about the most recent US presidential election, focusing on sources such as the Federal Election Commission, Election Assistance Commission, and other relevant federal agencies."
+                                                }
+                                            ],
+                                            "completed": false,
+                                            "selected_tool": "D",
+                                            "depth": 5,
+                                            "result": "Result of executing task: Research and compile a list of official government websites and resources that provide reliable information about the most recent US presidential election. Focus on authoritative sources such as federal election commissions, state election boards, and official government archives."
+                                        }
+                                    ],
+                                    "completed": false,
+                                    "selected_tool": "A",
+                                    "depth": 4
+                                }
+                            ],
+                            "completed": false,
+                            "selected_tool": "A",
+                            "depth": 3,
+                            "result": "Result of executing task: Research and identify the date of the most recent US presidential election that occurred prior to February 15, 2025."
+                        }
+                    ],
+                    "completed": false,
+                    "selected_tool": "A",
+                    "depth": 2,
+                    "result": "Result of executing task: Research and identify who is serving as the President of the United States on February 15, 2025."
                 }
             ],
             "completed": false,
-            "subtasks": [
-                {
-                    "task_id": 1,
-                    "task_name": "Retrieve Event Details",
-                    "task_description": "Fetch the details of the selected soccer event from the input",
-                    "input": [
-                        {
-                            "link_id": 0,
-                            "link_name": "selected_event",
-                            "link_description": "The soccer event selected by the user",
-                            "data_type": "dict",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Select Soccer Event",
-                            "output_by_task_id": 0
-                        }
-                    ],
-                    "output": [
-                        {
-                            "link_id": 0,
-                            "link_name": "event_details",
-                            "link_description": "Detailed information about the selected soccer event",
-                            "data_type": "dict",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Retrieve Event Details",
-                            "output_by_task_id": 1
-                        }
-                    ],
-                    "completed": false
-                },
-                {
-                    "task_id": 2,
-                    "task_name": "Check Ticket Availability",
-                    "task_description": "Verify if tickets are available for the selected event",
-                    "input": [
-                        {
-                            "link_id": 0,
-                            "link_name": "event_details",
-                            "link_description": "Detailed information about the selected soccer event",
-                            "data_type": "dict",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Retrieve Event Details",
-                            "output_by_task_id": 1
-                        }
-                    ],
-                    "output": [
-                        {
-                            "link_id": 0,
-                            "link_name": "ticket_availability",
-                            "link_description": "Information about available tickets for the event",
-                            "data_type": "dict",
-                            "data_source_type": "api",
-                            "output_by_task_name": "Check Ticket Availability",
-                            "output_by_task_id": 2
-                        }
-                    ],
-                    "completed": false
-                },
-                {
-                    "task_id": 3,
-                    "task_name": "Select Ticket",
-                    "task_description": "Choose a ticket from the available options",
-                    "input": [
-                        {
-                            "link_id": 0,
-                            "link_name": "ticket_availability",
-                            "link_description": "Information about available tickets for the event",
-                            "data_type": "dict",
-                            "data_source_type": "api",
-                            "output_by_task_name": "Check Ticket Availability",
-                            "output_by_task_id": 2
-                        }
-                    ],
-                    "output": [
-                        {
-                            "link_id": 0,
-                            "link_name": "selected_ticket",
-                            "link_description": "Details of the selected ticket",
-                            "data_type": "dict",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Select Ticket",
-                            "output_by_task_id": 3
-                        }
-                    ],
-                    "completed": false
-                },
-                {
-                    "task_id": 0,
-                    "task_name": "Handle Payment Transaction",
-                    "task_description": "Process the payment transaction for the selected ticket",
-                    "input": [
-                        {
-                            "link_id": 0,
-                            "link_name": "selected_ticket",
-                            "link_description": "The ticket selected for payment",
-                            "data_type": "dict",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Select Ticket",
-                            "output_by_task_id": 0
-                        },
-                        {
-                            "link_id": 1,
-                            "link_name": "payment_details",
-                            "link_description": "Payment information provided by the user",
-                            "data_type": "dict",
-                            "data_source_type": "api",
-                            "output_by_task_name": "Collect Payment Information",
-                            "output_by_task_id": 1
-                        }
-                    ],
-                    "output": [
-                        {
-                            "link_id": 0,
-                            "link_name": "transaction_result",
-                            "link_description": "Result of the payment transaction",
-                            "data_type": "dict",
-                            "data_source_type": "api",
-                            "output_by_task_name": "Handle Payment Transaction",
-                            "output_by_task_id": 0
-                        }
-                    ],
-                    "completed": false,
-                    "subtasks": [
-                        {
-                            "task_id": 1,
-                            "task_name": "Validate Payment Details",
-                            "task_description": "Check if the provided payment information is valid and complete",
-                            "input": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "payment_details",
-                                    "link_description": "Payment information provided by the user",
-                                    "data_type": "dict",
-                                    "data_source_type": "api",
-                                    "output_by_task_name": "Collect Payment Information",
-                                    "output_by_task_id": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "validation_result",
-                                    "link_description": "Result of payment details validation",
-                                    "data_type": "bool",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Validate Payment Details",
-                                    "output_by_task_id": 1
-                                }
-                            ],
-                            "completed": false
-                        },
-                        {
-                            "task_id": 0,
-                            "task_name": "Execute Payment Transaction",
-                            "task_description": "Execute the payment transaction using the validated payment details",
-                            "input": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "validated_payment_details",
-                                    "link_description": "Payment details that have been validated and are ready for transaction execution",
-                                    "data_type": "dict",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Validate Payment Details",
-                                    "output_by_task_id": 0
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "transaction_result",
-                                    "link_description": "Result of the executed payment transaction",
-                                    "data_type": "dict",
-                                    "data_source_type": "api",
-                                    "output_by_task_name": "Execute Payment Transaction",
-                                    "output_by_task_id": 0
-                                }
-                            ],
-                            "completed": false,
-                            "subtasks": [
-                                {
-                                    "task_id": 1,
-                                    "task_name": "Initiate Payment Transaction",
-                                    "task_description": "Start the payment transaction process using the validated payment details",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "validated_payment_details",
-                                            "link_description": "Payment details that have been validated and are ready for transaction execution",
-                                            "data_type": "dict",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Validate Payment Details",
-                                            "output_by_task_id": 0
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "initiated_transaction",
-                                            "link_description": "Details of the initiated payment transaction",
-                                            "data_type": "dict",
-                                            "data_source_type": "api",
-                                            "output_by_task_name": "Initiate Payment Transaction",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 2,
-                                    "task_name": "Process Payment",
-                                    "task_description": "Process the payment through the payment gateway and obtain authorization",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "initiated_transaction",
-                                            "link_description": "Details of the initiated payment transaction",
-                                            "data_type": "dict",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Initiate Payment Transaction",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "processed_payment",
-                                            "link_description": "Result of the processed payment including authorization status",
-                                            "data_type": "dict",
-                                            "data_source_type": "api",
-                                            "output_by_task_name": "Process Payment",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 3,
-                                    "task_name": "Finalize Transaction",
-                                    "task_description": "Complete the transaction by settling the payment and updating records",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "processed_payment",
-                                            "link_description": "Result of the processed payment including authorization status",
-                                            "data_type": "dict",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Process Payment",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "transaction_result",
-                                            "link_description": "Result of the executed payment transaction",
-                                            "data_type": "dict",
-                                            "data_source_type": "api",
-                                            "output_by_task_name": "Finalize Transaction",
-                                            "output_by_task_id": 3
-                                        }
-                                    ],
-                                    "completed": false
-                                }
-                            ]
-                        },
-                        {
-                            "task_id": 0,
-                            "task_name": "Update Ticket Status",
-                            "task_description": "Update the status of the ticket based on the payment transaction result",
-                            "input": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "payment_transaction_result",
-                                    "link_description": "Result of the payment transaction",
-                                    "data_type": "string",
-                                    "data_source_type": "api",
-                                    "output_by_task_name": "Process Payment",
-                                    "output_by_task_id": 1
-                                },
-                                {
-                                    "link_id": 1,
-                                    "link_name": "ticket_id",
-                                    "link_description": "Unique identifier of the ticket",
-                                    "data_type": "string",
-                                    "data_source_type": "database",
-                                    "output_by_task_name": "Retrieve Ticket",
-                                    "output_by_task_id": 2
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "updated_ticket_status",
-                                    "link_description": "New status of the ticket after update",
-                                    "data_type": "string",
-                                    "data_source_type": "database",
-                                    "output_by_task_name": "Update Ticket Status",
-                                    "output_by_task_id": 0
-                                }
-                            ],
-                            "completed": false,
-                            "subtasks": [
-                                {
-                                    "task_id": 1,
-                                    "task_name": "Retrieve Payment Transaction Result",
-                                    "task_description": "Fetch the payment transaction result from the API",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "payment_transaction_id",
-                                            "link_description": "Identifier of the payment transaction",
-                                            "data_type": "string",
-                                            "data_source_type": "api",
-                                            "output_by_task_name": "Process Payment",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "payment_transaction_result",
-                                            "link_description": "Result of the payment transaction",
-                                            "data_type": "string",
-                                            "data_source_type": "api",
-                                            "output_by_task_name": "Retrieve Payment Transaction Result",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 2,
-                                    "task_name": "Determine New Ticket Status",
-                                    "task_description": "Determine the new status of the ticket based on the payment transaction result",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "payment_transaction_result",
-                                            "link_description": "Result of the payment transaction",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Retrieve Payment Transaction Result",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "new_ticket_status",
-                                            "link_description": "New status to be applied to the ticket",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Determine New Ticket Status",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 3,
-                                    "task_name": "Update Ticket in Database",
-                                    "task_description": "Update the ticket status in the database",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "ticket_id",
-                                            "link_description": "Unique identifier of the ticket",
-                                            "data_type": "string",
-                                            "data_source_type": "database",
-                                            "output_by_task_name": "Retrieve Ticket",
-                                            "output_by_task_id": 2
-                                        },
-                                        {
-                                            "link_id": 1,
-                                            "link_name": "new_ticket_status",
-                                            "link_description": "New status to be applied to the ticket",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Determine New Ticket Status",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "updated_ticket_status",
-                                            "link_description": "New status of the ticket after update",
-                                            "data_type": "string",
-                                            "data_source_type": "database",
-                                            "output_by_task_name": "Update Ticket in Database",
-                                            "output_by_task_id": 3
-                                        }
-                                    ],
-                                    "completed": false
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "task_id": 0,
-                    "task_name": "Create Booking Confirmation with Ticket Details",
-                    "task_description": "Generate a booking confirmation email that includes ticket details for the customer's reservation",
-                    "input": [
-                        {
-                            "link_id": 0,
-                            "link_name": "booking_info",
-                            "link_description": "Customer's booking information including name, date, time, and reservation details",
-                            "data_type": "dict",
-                            "data_source_type": "database",
-                            "output_by_task_name": "Retrieve Booking Information",
-                            "output_by_task_id": 0
-                        },
-                        {
-                            "link_id": 1,
-                            "link_name": "ticket_details",
-                            "link_description": "Ticket information including ticket number, barcode, and any special instructions",
-                            "data_type": "dict",
-                            "data_source_type": "database",
-                            "output_by_task_name": "Generate Ticket",
-                            "output_by_task_id": 1
-                        }
-                    ],
-                    "output": [
-                        {
-                            "link_id": 0,
-                            "link_name": "confirmation_email",
-                            "link_description": "Formatted booking confirmation email with ticket details",
-                            "data_type": "string",
-                            "data_source_type": "other task",
-                            "output_by_task_name": "Create Booking Confirmation with Ticket Details",
-                            "output_by_task_id": 0
-                        }
-                    ],
-                    "completed": false,
-                    "subtasks": [
-                        {
-                            "task_id": 1,
-                            "task_name": "Design Email Template",
-                            "task_description": "Create a visually appealing and responsive email template for the booking confirmation",
-                            "input": [],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "email_template",
-                                    "link_description": "HTML template for the booking confirmation email",
-                                    "data_type": "string",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Design Email Template",
-                                    "output_by_task_id": 1
-                                }
-                            ],
-                            "completed": false
-                        },
-                        {
-                            "task_id": 0,
-                            "task_name": "Write booking confirmation email content",
-                            "task_description": "Create the content for a booking confirmation email, including a welcoming message and important information",
-                            "input": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "booking_details",
-                                    "link_description": "Details of the booking, including date, time, and location",
-                                    "data_type": "dict",
-                                    "data_source_type": "database",
-                                    "output_by_task_name": "Retrieve booking details",
-                                    "output_by_task_id": 1
-                                },
-                                {
-                                    "link_id": 1,
-                                    "link_name": "customer_name",
-                                    "link_description": "Name of the customer who made the booking",
-                                    "data_type": "str",
-                                    "data_source_type": "database",
-                                    "output_by_task_name": "Retrieve customer information",
-                                    "output_by_task_id": 2
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "email_content",
-                                    "link_description": "Complete content for the booking confirmation email",
-                                    "data_type": "str",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Write booking confirmation email content",
-                                    "output_by_task_id": 0
-                                }
-                            ],
-                            "completed": false,
-                            "subtasks": [
-                                {
-                                    "task_id": 1,
-                                    "task_name": "Create welcoming message",
-                                    "task_description": "Write a friendly and personalized greeting for the customer",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "customer_name",
-                                            "link_description": "Name of the customer who made the booking",
-                                            "data_type": "str",
-                                            "data_source_type": "database",
-                                            "output_by_task_name": "Retrieve customer information",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "welcoming_message",
-                                            "link_description": "Personalized greeting for the customer",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Create welcoming message",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 2,
-                                    "task_name": "Compile booking details",
-                                    "task_description": "Organize and format the booking information for the email",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "booking_details",
-                                            "link_description": "Details of the booking, including date, time, and location",
-                                            "data_type": "dict",
-                                            "data_source_type": "database",
-                                            "output_by_task_name": "Retrieve booking details",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "formatted_booking_details",
-                                            "link_description": "Organized and formatted booking information",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Compile booking details",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 3,
-                                    "task_name": "Add important information",
-                                    "task_description": "Include any additional important information or policies related to the booking",
-                                    "input": [],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "additional_information",
-                                            "link_description": "Important information and policies related to the booking",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Add important information",
-                                            "output_by_task_id": 3
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 4,
-                                    "task_name": "Compose email body",
-                                    "task_description": "Combine all components into a cohesive email body",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "welcoming_message",
-                                            "link_description": "Personalized greeting for the customer",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Create welcoming message",
-                                            "output_by_task_id": 1
-                                        },
-                                        {
-                                            "link_id": 1,
-                                            "link_name": "formatted_booking_details",
-                                            "link_description": "Organized and formatted booking information",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Compile booking details",
-                                            "output_by_task_id": 2
-                                        },
-                                        {
-                                            "link_id": 2,
-                                            "link_name": "additional_information",
-                                            "link_description": "Important information and policies related to the booking",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Add important information",
-                                            "output_by_task_id": 3
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "email_content",
-                                            "link_description": "Complete content for the booking confirmation email",
-                                            "data_type": "str",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Compose email body",
-                                            "output_by_task_id": 4
-                                        }
-                                    ],
-                                    "completed": false
-                                }
-                            ]
-                        },
-                        {
-                            "task_id": 0,
-                            "task_name": "Combine Email Template and Content",
-                            "task_description": "Combine the email template with the composed content to create the final confirmation email",
-                            "input": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "Email Template",
-                                    "link_description": "The base email template to be used",
-                                    "data_type": "string",
-                                    "data_source_type": "file",
-                                    "output_by_task_name": "Load Email Template",
-                                    "output_by_task_id": 0
-                                },
-                                {
-                                    "link_id": 1,
-                                    "link_name": "Composed Content",
-                                    "link_description": "The content to be inserted into the email template",
-                                    "data_type": "string",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Compose Email Content",
-                                    "output_by_task_id": 1
-                                }
-                            ],
-                            "output": [
-                                {
-                                    "link_id": 0,
-                                    "link_name": "Final Confirmation Email",
-                                    "link_description": "The complete confirmation email with template and content combined",
-                                    "data_type": "string",
-                                    "data_source_type": "other task",
-                                    "output_by_task_name": "Combine Email Template and Content",
-                                    "output_by_task_id": 0
-                                }
-                            ],
-                            "completed": false,
-                            "subtasks": [
-                                {
-                                    "task_id": 1,
-                                    "task_name": "Load Email Template",
-                                    "task_description": "Load the base email template from the file system",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Email Template File",
-                                            "link_description": "File containing the base email template",
-                                            "data_type": "string",
-                                            "data_source_type": "file",
-                                            "output_by_task_name": "N/A",
-                                            "output_by_task_id": 0
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Email Template",
-                                            "link_description": "The loaded base email template",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Load Email Template",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 2,
-                                    "task_name": "Insert Content into Template",
-                                    "task_description": "Insert the composed content into the appropriate placeholders in the email template",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Email Template",
-                                            "link_description": "The loaded base email template",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Load Email Template",
-                                            "output_by_task_id": 1
-                                        },
-                                        {
-                                            "link_id": 1,
-                                            "link_name": "Composed Content",
-                                            "link_description": "The content to be inserted into the email template",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Compose Email Content",
-                                            "output_by_task_id": 1
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Combined Email",
-                                            "link_description": "The email template with content inserted",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Insert Content into Template",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "completed": false
-                                },
-                                {
-                                    "task_id": 3,
-                                    "task_name": "Validate Final Email",
-                                    "task_description": "Check the combined email for any formatting issues or missing content",
-                                    "input": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Combined Email",
-                                            "link_description": "The email template with content inserted",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Insert Content into Template",
-                                            "output_by_task_id": 2
-                                        }
-                                    ],
-                                    "output": [
-                                        {
-                                            "link_id": 0,
-                                            "link_name": "Final Confirmation Email",
-                                            "link_description": "The complete confirmation email with template and content combined",
-                                            "data_type": "string",
-                                            "data_source_type": "other task",
-                                            "output_by_task_name": "Validate Final Email",
-                                            "output_by_task_id": 3
-                                        }
-                                    ],
-                                    "completed": false
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+            "selected_tool": "D",
+            "depth": 1
         }
-    ]
+    ],
+    "selected_tool": "A",
+    "depth": 0
 }
