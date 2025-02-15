@@ -1,0 +1,889 @@
+{
+    "task_id": 0,
+    "task_name": "Find and Book Soccer Event in San Francisco",
+    "task_description": "Search for soccer-related events in San Francisco for tomorrow and book a ticket for one of them.",
+    "input": [
+        {
+            "link_id": 0,
+            "link_name": "current_date",
+            "link_description": "The current date to determine 'tomorrow'",
+            "data_type": "datetime",
+            "data_source_type": "api",
+            "output_by_task_name": "Get Current Date",
+            "output_by_task_id": 1
+        }
+    ],
+    "output": [
+        {
+            "link_id": 1,
+            "link_name": "booked_event",
+            "link_description": "Details of the booked soccer event",
+            "data_type": "dict",
+            "data_source_type": "api",
+            "output_by_task_name": "Find and Book Soccer Event in San Francisco",
+            "output_by_task_id": 0
+        }
+    ],
+    "completed": false,
+    "subtasks": [
+        {
+            "task_id": 1,
+            "task_name": "Determine Tomorrow's Date",
+            "task_description": "Calculate tomorrow's date based on the current date input",
+            "input": [
+                {
+                    "link_id": 0,
+                    "link_name": "current_date",
+                    "link_description": "The current date to determine 'tomorrow'",
+                    "data_type": "datetime",
+                    "data_source_type": "api",
+                    "output_by_task_name": "Get Current Date",
+                    "output_by_task_id": 1
+                }
+            ],
+            "output": [
+                {
+                    "link_id": 1,
+                    "link_name": "tomorrow_date",
+                    "link_description": "The date for tomorrow",
+                    "data_type": "datetime",
+                    "data_source_type": "other task",
+                    "output_by_task_name": "Determine Tomorrow's Date",
+                    "output_by_task_id": 1
+                }
+            ],
+            "completed": false
+        },
+        {
+            "task_id": 2,
+            "task_name": "Search Soccer Events",
+            "task_description": "Search for soccer-related events in San Francisco for tomorrow",
+            "input": [
+                {
+                    "link_id": 1,
+                    "link_name": "tomorrow_date",
+                    "link_description": "The date for tomorrow",
+                    "data_type": "datetime",
+                    "data_source_type": "other task",
+                    "output_by_task_name": "Determine Tomorrow's Date",
+                    "output_by_task_id": 1
+                }
+            ],
+            "output": [
+                {
+                    "link_id": 2,
+                    "link_name": "soccer_events",
+                    "link_description": "List of soccer events in San Francisco for tomorrow",
+                    "data_type": "list",
+                    "data_source_type": "api",
+                    "output_by_task_name": "Search Soccer Events",
+                    "output_by_task_id": 2
+                }
+            ],
+            "completed": false
+        },
+        {
+            "task_id": 3,
+            "task_name": "Select Event",
+            "task_description": "Choose a soccer event from the list of available events",
+            "input": [
+                {
+                    "link_id": 2,
+                    "link_name": "soccer_events",
+                    "link_description": "List of soccer events in San Francisco for tomorrow",
+                    "data_type": "list",
+                    "data_source_type": "api",
+                    "output_by_task_name": "Search Soccer Events",
+                    "output_by_task_id": 2
+                }
+            ],
+            "output": [
+                {
+                    "link_id": 3,
+                    "link_name": "selected_event",
+                    "link_description": "The chosen soccer event",
+                    "data_type": "dict",
+                    "data_source_type": "other task",
+                    "output_by_task_name": "Select Event",
+                    "output_by_task_id": 3
+                }
+            ],
+            "completed": false
+        },
+        {
+            "task_id": 0,
+            "task_name": "Book Soccer Event Ticket",
+            "task_description": "Book a ticket for the selected soccer event",
+            "input": [
+                {
+                    "link_id": 0,
+                    "link_name": "selected_event",
+                    "link_description": "The soccer event selected by the user",
+                    "data_type": "dict",
+                    "data_source_type": "other task",
+                    "output_by_task_name": "Select Soccer Event",
+                    "output_by_task_id": 0
+                }
+            ],
+            "output": [
+                {
+                    "link_id": 0,
+                    "link_name": "booking_confirmation",
+                    "link_description": "Confirmation details of the booked ticket",
+                    "data_type": "dict",
+                    "data_source_type": "api",
+                    "output_by_task_name": "Book Soccer Event Ticket",
+                    "output_by_task_id": 0
+                }
+            ],
+            "completed": false,
+            "subtasks": [
+                {
+                    "task_id": 1,
+                    "task_name": "Retrieve Event Details",
+                    "task_description": "Fetch the details of the selected soccer event from the input",
+                    "input": [
+                        {
+                            "link_id": 0,
+                            "link_name": "selected_event",
+                            "link_description": "The soccer event selected by the user",
+                            "data_type": "dict",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Select Soccer Event",
+                            "output_by_task_id": 0
+                        }
+                    ],
+                    "output": [
+                        {
+                            "link_id": 0,
+                            "link_name": "event_details",
+                            "link_description": "Detailed information about the selected soccer event",
+                            "data_type": "dict",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Retrieve Event Details",
+                            "output_by_task_id": 1
+                        }
+                    ],
+                    "completed": false
+                },
+                {
+                    "task_id": 2,
+                    "task_name": "Check Ticket Availability",
+                    "task_description": "Verify if tickets are available for the selected event",
+                    "input": [
+                        {
+                            "link_id": 0,
+                            "link_name": "event_details",
+                            "link_description": "Detailed information about the selected soccer event",
+                            "data_type": "dict",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Retrieve Event Details",
+                            "output_by_task_id": 1
+                        }
+                    ],
+                    "output": [
+                        {
+                            "link_id": 0,
+                            "link_name": "ticket_availability",
+                            "link_description": "Information about available tickets for the event",
+                            "data_type": "dict",
+                            "data_source_type": "api",
+                            "output_by_task_name": "Check Ticket Availability",
+                            "output_by_task_id": 2
+                        }
+                    ],
+                    "completed": false
+                },
+                {
+                    "task_id": 3,
+                    "task_name": "Select Ticket",
+                    "task_description": "Choose a ticket from the available options",
+                    "input": [
+                        {
+                            "link_id": 0,
+                            "link_name": "ticket_availability",
+                            "link_description": "Information about available tickets for the event",
+                            "data_type": "dict",
+                            "data_source_type": "api",
+                            "output_by_task_name": "Check Ticket Availability",
+                            "output_by_task_id": 2
+                        }
+                    ],
+                    "output": [
+                        {
+                            "link_id": 0,
+                            "link_name": "selected_ticket",
+                            "link_description": "Details of the selected ticket",
+                            "data_type": "dict",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Select Ticket",
+                            "output_by_task_id": 3
+                        }
+                    ],
+                    "completed": false
+                },
+                {
+                    "task_id": 0,
+                    "task_name": "Handle Payment Transaction",
+                    "task_description": "Process the payment transaction for the selected ticket",
+                    "input": [
+                        {
+                            "link_id": 0,
+                            "link_name": "selected_ticket",
+                            "link_description": "The ticket selected for payment",
+                            "data_type": "dict",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Select Ticket",
+                            "output_by_task_id": 0
+                        },
+                        {
+                            "link_id": 1,
+                            "link_name": "payment_details",
+                            "link_description": "Payment information provided by the user",
+                            "data_type": "dict",
+                            "data_source_type": "api",
+                            "output_by_task_name": "Collect Payment Information",
+                            "output_by_task_id": 1
+                        }
+                    ],
+                    "output": [
+                        {
+                            "link_id": 0,
+                            "link_name": "transaction_result",
+                            "link_description": "Result of the payment transaction",
+                            "data_type": "dict",
+                            "data_source_type": "api",
+                            "output_by_task_name": "Handle Payment Transaction",
+                            "output_by_task_id": 0
+                        }
+                    ],
+                    "completed": false,
+                    "subtasks": [
+                        {
+                            "task_id": 1,
+                            "task_name": "Validate Payment Details",
+                            "task_description": "Check if the provided payment information is valid and complete",
+                            "input": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "payment_details",
+                                    "link_description": "Payment information provided by the user",
+                                    "data_type": "dict",
+                                    "data_source_type": "api",
+                                    "output_by_task_name": "Collect Payment Information",
+                                    "output_by_task_id": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "validation_result",
+                                    "link_description": "Result of payment details validation",
+                                    "data_type": "bool",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Validate Payment Details",
+                                    "output_by_task_id": 1
+                                }
+                            ],
+                            "completed": false
+                        },
+                        {
+                            "task_id": 0,
+                            "task_name": "Execute Payment Transaction",
+                            "task_description": "Execute the payment transaction using the validated payment details",
+                            "input": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "validated_payment_details",
+                                    "link_description": "Payment details that have been validated and are ready for transaction execution",
+                                    "data_type": "dict",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Validate Payment Details",
+                                    "output_by_task_id": 0
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "transaction_result",
+                                    "link_description": "Result of the executed payment transaction",
+                                    "data_type": "dict",
+                                    "data_source_type": "api",
+                                    "output_by_task_name": "Execute Payment Transaction",
+                                    "output_by_task_id": 0
+                                }
+                            ],
+                            "completed": false,
+                            "subtasks": [
+                                {
+                                    "task_id": 1,
+                                    "task_name": "Initiate Payment Transaction",
+                                    "task_description": "Start the payment transaction process using the validated payment details",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "validated_payment_details",
+                                            "link_description": "Payment details that have been validated and are ready for transaction execution",
+                                            "data_type": "dict",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Validate Payment Details",
+                                            "output_by_task_id": 0
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "initiated_transaction",
+                                            "link_description": "Details of the initiated payment transaction",
+                                            "data_type": "dict",
+                                            "data_source_type": "api",
+                                            "output_by_task_name": "Initiate Payment Transaction",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 2,
+                                    "task_name": "Process Payment",
+                                    "task_description": "Process the payment through the payment gateway and obtain authorization",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "initiated_transaction",
+                                            "link_description": "Details of the initiated payment transaction",
+                                            "data_type": "dict",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Initiate Payment Transaction",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "processed_payment",
+                                            "link_description": "Result of the processed payment including authorization status",
+                                            "data_type": "dict",
+                                            "data_source_type": "api",
+                                            "output_by_task_name": "Process Payment",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 3,
+                                    "task_name": "Finalize Transaction",
+                                    "task_description": "Complete the transaction by settling the payment and updating records",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "processed_payment",
+                                            "link_description": "Result of the processed payment including authorization status",
+                                            "data_type": "dict",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Process Payment",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "transaction_result",
+                                            "link_description": "Result of the executed payment transaction",
+                                            "data_type": "dict",
+                                            "data_source_type": "api",
+                                            "output_by_task_name": "Finalize Transaction",
+                                            "output_by_task_id": 3
+                                        }
+                                    ],
+                                    "completed": false
+                                }
+                            ]
+                        },
+                        {
+                            "task_id": 0,
+                            "task_name": "Update Ticket Status",
+                            "task_description": "Update the status of the ticket based on the payment transaction result",
+                            "input": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "payment_transaction_result",
+                                    "link_description": "Result of the payment transaction",
+                                    "data_type": "string",
+                                    "data_source_type": "api",
+                                    "output_by_task_name": "Process Payment",
+                                    "output_by_task_id": 1
+                                },
+                                {
+                                    "link_id": 1,
+                                    "link_name": "ticket_id",
+                                    "link_description": "Unique identifier of the ticket",
+                                    "data_type": "string",
+                                    "data_source_type": "database",
+                                    "output_by_task_name": "Retrieve Ticket",
+                                    "output_by_task_id": 2
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "updated_ticket_status",
+                                    "link_description": "New status of the ticket after update",
+                                    "data_type": "string",
+                                    "data_source_type": "database",
+                                    "output_by_task_name": "Update Ticket Status",
+                                    "output_by_task_id": 0
+                                }
+                            ],
+                            "completed": false,
+                            "subtasks": [
+                                {
+                                    "task_id": 1,
+                                    "task_name": "Retrieve Payment Transaction Result",
+                                    "task_description": "Fetch the payment transaction result from the API",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "payment_transaction_id",
+                                            "link_description": "Identifier of the payment transaction",
+                                            "data_type": "string",
+                                            "data_source_type": "api",
+                                            "output_by_task_name": "Process Payment",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "payment_transaction_result",
+                                            "link_description": "Result of the payment transaction",
+                                            "data_type": "string",
+                                            "data_source_type": "api",
+                                            "output_by_task_name": "Retrieve Payment Transaction Result",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 2,
+                                    "task_name": "Determine New Ticket Status",
+                                    "task_description": "Determine the new status of the ticket based on the payment transaction result",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "payment_transaction_result",
+                                            "link_description": "Result of the payment transaction",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Retrieve Payment Transaction Result",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "new_ticket_status",
+                                            "link_description": "New status to be applied to the ticket",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Determine New Ticket Status",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 3,
+                                    "task_name": "Update Ticket in Database",
+                                    "task_description": "Update the ticket status in the database",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "ticket_id",
+                                            "link_description": "Unique identifier of the ticket",
+                                            "data_type": "string",
+                                            "data_source_type": "database",
+                                            "output_by_task_name": "Retrieve Ticket",
+                                            "output_by_task_id": 2
+                                        },
+                                        {
+                                            "link_id": 1,
+                                            "link_name": "new_ticket_status",
+                                            "link_description": "New status to be applied to the ticket",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Determine New Ticket Status",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "updated_ticket_status",
+                                            "link_description": "New status of the ticket after update",
+                                            "data_type": "string",
+                                            "data_source_type": "database",
+                                            "output_by_task_name": "Update Ticket in Database",
+                                            "output_by_task_id": 3
+                                        }
+                                    ],
+                                    "completed": false
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "task_id": 0,
+                    "task_name": "Create Booking Confirmation with Ticket Details",
+                    "task_description": "Generate a booking confirmation email that includes ticket details for the customer's reservation",
+                    "input": [
+                        {
+                            "link_id": 0,
+                            "link_name": "booking_info",
+                            "link_description": "Customer's booking information including name, date, time, and reservation details",
+                            "data_type": "dict",
+                            "data_source_type": "database",
+                            "output_by_task_name": "Retrieve Booking Information",
+                            "output_by_task_id": 0
+                        },
+                        {
+                            "link_id": 1,
+                            "link_name": "ticket_details",
+                            "link_description": "Ticket information including ticket number, barcode, and any special instructions",
+                            "data_type": "dict",
+                            "data_source_type": "database",
+                            "output_by_task_name": "Generate Ticket",
+                            "output_by_task_id": 1
+                        }
+                    ],
+                    "output": [
+                        {
+                            "link_id": 0,
+                            "link_name": "confirmation_email",
+                            "link_description": "Formatted booking confirmation email with ticket details",
+                            "data_type": "string",
+                            "data_source_type": "other task",
+                            "output_by_task_name": "Create Booking Confirmation with Ticket Details",
+                            "output_by_task_id": 0
+                        }
+                    ],
+                    "completed": false,
+                    "subtasks": [
+                        {
+                            "task_id": 1,
+                            "task_name": "Design Email Template",
+                            "task_description": "Create a visually appealing and responsive email template for the booking confirmation",
+                            "input": [],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "email_template",
+                                    "link_description": "HTML template for the booking confirmation email",
+                                    "data_type": "string",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Design Email Template",
+                                    "output_by_task_id": 1
+                                }
+                            ],
+                            "completed": false
+                        },
+                        {
+                            "task_id": 0,
+                            "task_name": "Write booking confirmation email content",
+                            "task_description": "Create the content for a booking confirmation email, including a welcoming message and important information",
+                            "input": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "booking_details",
+                                    "link_description": "Details of the booking, including date, time, and location",
+                                    "data_type": "dict",
+                                    "data_source_type": "database",
+                                    "output_by_task_name": "Retrieve booking details",
+                                    "output_by_task_id": 1
+                                },
+                                {
+                                    "link_id": 1,
+                                    "link_name": "customer_name",
+                                    "link_description": "Name of the customer who made the booking",
+                                    "data_type": "str",
+                                    "data_source_type": "database",
+                                    "output_by_task_name": "Retrieve customer information",
+                                    "output_by_task_id": 2
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "email_content",
+                                    "link_description": "Complete content for the booking confirmation email",
+                                    "data_type": "str",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Write booking confirmation email content",
+                                    "output_by_task_id": 0
+                                }
+                            ],
+                            "completed": false,
+                            "subtasks": [
+                                {
+                                    "task_id": 1,
+                                    "task_name": "Create welcoming message",
+                                    "task_description": "Write a friendly and personalized greeting for the customer",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "customer_name",
+                                            "link_description": "Name of the customer who made the booking",
+                                            "data_type": "str",
+                                            "data_source_type": "database",
+                                            "output_by_task_name": "Retrieve customer information",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "welcoming_message",
+                                            "link_description": "Personalized greeting for the customer",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Create welcoming message",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 2,
+                                    "task_name": "Compile booking details",
+                                    "task_description": "Organize and format the booking information for the email",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "booking_details",
+                                            "link_description": "Details of the booking, including date, time, and location",
+                                            "data_type": "dict",
+                                            "data_source_type": "database",
+                                            "output_by_task_name": "Retrieve booking details",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "formatted_booking_details",
+                                            "link_description": "Organized and formatted booking information",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Compile booking details",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 3,
+                                    "task_name": "Add important information",
+                                    "task_description": "Include any additional important information or policies related to the booking",
+                                    "input": [],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "additional_information",
+                                            "link_description": "Important information and policies related to the booking",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Add important information",
+                                            "output_by_task_id": 3
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 4,
+                                    "task_name": "Compose email body",
+                                    "task_description": "Combine all components into a cohesive email body",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "welcoming_message",
+                                            "link_description": "Personalized greeting for the customer",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Create welcoming message",
+                                            "output_by_task_id": 1
+                                        },
+                                        {
+                                            "link_id": 1,
+                                            "link_name": "formatted_booking_details",
+                                            "link_description": "Organized and formatted booking information",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Compile booking details",
+                                            "output_by_task_id": 2
+                                        },
+                                        {
+                                            "link_id": 2,
+                                            "link_name": "additional_information",
+                                            "link_description": "Important information and policies related to the booking",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Add important information",
+                                            "output_by_task_id": 3
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "email_content",
+                                            "link_description": "Complete content for the booking confirmation email",
+                                            "data_type": "str",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Compose email body",
+                                            "output_by_task_id": 4
+                                        }
+                                    ],
+                                    "completed": false
+                                }
+                            ]
+                        },
+                        {
+                            "task_id": 0,
+                            "task_name": "Combine Email Template and Content",
+                            "task_description": "Combine the email template with the composed content to create the final confirmation email",
+                            "input": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "Email Template",
+                                    "link_description": "The base email template to be used",
+                                    "data_type": "string",
+                                    "data_source_type": "file",
+                                    "output_by_task_name": "Load Email Template",
+                                    "output_by_task_id": 0
+                                },
+                                {
+                                    "link_id": 1,
+                                    "link_name": "Composed Content",
+                                    "link_description": "The content to be inserted into the email template",
+                                    "data_type": "string",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Compose Email Content",
+                                    "output_by_task_id": 1
+                                }
+                            ],
+                            "output": [
+                                {
+                                    "link_id": 0,
+                                    "link_name": "Final Confirmation Email",
+                                    "link_description": "The complete confirmation email with template and content combined",
+                                    "data_type": "string",
+                                    "data_source_type": "other task",
+                                    "output_by_task_name": "Combine Email Template and Content",
+                                    "output_by_task_id": 0
+                                }
+                            ],
+                            "completed": false,
+                            "subtasks": [
+                                {
+                                    "task_id": 1,
+                                    "task_name": "Load Email Template",
+                                    "task_description": "Load the base email template from the file system",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Email Template File",
+                                            "link_description": "File containing the base email template",
+                                            "data_type": "string",
+                                            "data_source_type": "file",
+                                            "output_by_task_name": "N/A",
+                                            "output_by_task_id": 0
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Email Template",
+                                            "link_description": "The loaded base email template",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Load Email Template",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 2,
+                                    "task_name": "Insert Content into Template",
+                                    "task_description": "Insert the composed content into the appropriate placeholders in the email template",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Email Template",
+                                            "link_description": "The loaded base email template",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Load Email Template",
+                                            "output_by_task_id": 1
+                                        },
+                                        {
+                                            "link_id": 1,
+                                            "link_name": "Composed Content",
+                                            "link_description": "The content to be inserted into the email template",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Compose Email Content",
+                                            "output_by_task_id": 1
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Combined Email",
+                                            "link_description": "The email template with content inserted",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Insert Content into Template",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "completed": false
+                                },
+                                {
+                                    "task_id": 3,
+                                    "task_name": "Validate Final Email",
+                                    "task_description": "Check the combined email for any formatting issues or missing content",
+                                    "input": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Combined Email",
+                                            "link_description": "The email template with content inserted",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Insert Content into Template",
+                                            "output_by_task_id": 2
+                                        }
+                                    ],
+                                    "output": [
+                                        {
+                                            "link_id": 0,
+                                            "link_name": "Final Confirmation Email",
+                                            "link_description": "The complete confirmation email with template and content combined",
+                                            "data_type": "string",
+                                            "data_source_type": "other task",
+                                            "output_by_task_name": "Validate Final Email",
+                                            "output_by_task_id": 3
+                                        }
+                                    ],
+                                    "completed": false
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

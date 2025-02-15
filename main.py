@@ -19,7 +19,7 @@ from schemas.Link import Link
 
 # given user prompt and schema, generate a task following the schema Task
 # infer inputs and outputs, generate links following the schema Link
-def generate_task(prompt: str, schema: Dict):
+def generate_task(prompt: str, schema: Dict, depth: int = 0):
     """
     Generate a task following the schema
     :param task_type: str
@@ -43,7 +43,7 @@ def generate_task(prompt: str, schema: Dict):
     print(task_json_string)
 
     messages.append({"role": "assistant", "content": task_json_string})
-    messages.append({"role": "user", "content": "Given the task JSON:" + task_json_string + "\nreturn a list of 3 independent subtasks. Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n" + schema_string + "\n\nOnly output the subtasks and nothing else."})
+    messages.append({"role": "user", "content": "Given the task JSON:" + task_json_string + "\nreturn a list of independent subtasks. Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n" + schema_string + "\n\nOnly output the subtasks and nothing else."})
 
     response = client.chat.completions.create(
         model="sonar-pro",
@@ -59,9 +59,9 @@ def generate_task(prompt: str, schema: Dict):
     subtasks = json.loads(subtasks_json_string)
     print(subtasks_json_string)
     selected_tools = {}
-    for subtask in subtasks:
-        # message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nWhat is the best tool to solve this problem:\nA) LLM only\nB) code only\nC) mix of the two\n\nOnly output the selected option letter and nothing else."}
-        message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nIs this too vague to implement as written?:\nA) Yes\nB) No\n\nOnly output the selected option letter and nothing else."}
+    for i, subtask in enumerate(subtasks):
+        message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nWhat is the best tool to solve this problem:\nA) LLM only\nB) code only\nC) mix of the two\n\nOnly output the selected option letter and nothing else."}
+        # message = {"role": "user", "content": "Given the subtask JSON:\n" + json.dumps(subtask) + "\nfollowing the schema:\n" + schema_string + "\n\nDoes this task necessitate LLM summarization or question answering abilities?:\nA) Yes\nB) No\n\nOnly output the selected option letter and nothing else."}
         response = client.chat.completions.create(
             model="sonar-pro",
             messages=messages+[message],
@@ -70,12 +70,14 @@ def generate_task(prompt: str, schema: Dict):
         # TODO: output checking
         selected_tools[subtask["task_id"]] = response.choices[0].message.content
         print(subtask["task_id"], selected_tools[subtask["task_id"]])
-        if selected_tools[subtask["task_id"]] == "A":
+        if selected_tools[subtask["task_id"]] == "C" and depth < 3:
             print("Generating task: " + subtask["task_description"])
-            generate_task(subtask["task_description"], schema)
+            subtasks[i] = generate_task(subtask["task_description"], schema, depth+1)
     main_task = json.loads(task_json_string)
     main_task["subtasks"] = subtasks
     return main_task
 prompt = input("Enter a prompt: ")
-full_task = generate_task(prompt, Task.model_json_schema())
+full_task = generate_task(prompt, Task.model_json_schema(), 0)
 print(json.dumps(full_task, indent=4))
+with open("out.txt", 'w') as file:
+    json.dump(full_task, file, indent=4)
