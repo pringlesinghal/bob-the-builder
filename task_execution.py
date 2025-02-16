@@ -17,6 +17,8 @@ from scrapybara.prompts import UBUNTU_SYSTEM_PROMPT
 from enum import Enum, auto
 from dataclasses import dataclass
 from pathlib import Path
+import webbrowser
+from jsonschema import ValidationError
 
 async def execute_task(task: Dict) -> Any: #Changed execution format to pass in inputs
     """Executes a task based on its selected tool, handling inputs and outputs."""
@@ -32,7 +34,7 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
         print("Continuing...", link.link_name)
         inputs[link.link_name] = link.value
     try:
-        if selected_tool == 'A':
+        if selected_tool == 'E':
             # Execute deterministic code
             print(f"inputs={inputs}")
             code = await a_generate_code(task_description, input_schema = {link["link_name"]: link["data_type"] for link in task["ingests"]}, output_schema = {link["link_name"]: link["data_type"] for link in task["produces"]})
@@ -67,12 +69,10 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
         elif selected_tool == 'B':
             #Use LLM search/reasoning
             prompt = await a_generate_llm_prompt(task_description, inputs, output_schema = {link["link_name"]: link["data_type"] for link in task["produces"]})
-            print("YEA1")
             messages = [HumanMessage(content=prompt)]
             for attempt in range(MAX_RETRIES): #Add retry loop
                 try:
                     response =  await chat_model.ainvoke(messages)
-                    print("YEA2")
                     for link in task["produces"]:
                         link = Link.model_validate(link)
                         val = clean_json(response.content)
@@ -80,14 +80,12 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                             raise ValueError(f"Badly formatted JSON string: {val}")
                         print(val)
                         link.set_value(json.loads(val)[link.link_name])
-                    
-                    print("YEA3")
                     return response.content
                 except (ValidationError, json.JSONDecodeError, ValueError) as e:
                     print(f"Attempt {attempt + 1} failed: {e}")
                     if attempt == MAX_RETRIES - 1:
                         return f"Error in tool B use after {MAX_RETRIES} attempts."
-        elif selected_tool == 'C':
+        elif selected_tool == 'A' or selected_tool == 'C':
             class InputType(Enum):
                 TEXT = "text"
                 FILE = "file"
@@ -149,6 +147,8 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                         self.model = Anthropic()
                         
                         self.state = State.READY
+
+                        webbrowser.open_new_tab(self.instance.get_stream_url().stream_url)
                         return True
                     except Exception as e:
                         self.error_message = str(e)
@@ -178,7 +178,7 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                         
                         # Execute Scrapybara action
                         response = self.client.act(
-                            model=self.model(),
+                            model=self.model,
                             tools=[
                                 BashTool(self.instance),
                                 ComputerTool(self.instance),
@@ -203,6 +203,7 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                 def terminate(self):
                     if self.instance:
                         try:
+
                             self.instance.stop()
                             self.state = State.TERMINATED
                         except Exception as e:
@@ -256,47 +257,15 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                             print(f"Processing failed: {machine.error_message}")
                             break
                     elif machine.state in [State.WAITING_FOR_INPUT]:
-                        print("\n[Enter your answer/instruction or 'q' to quit]")
-                        user_input = input("> ")
-                        
-                        if user_input.lower() == 'q':
+                        json_out = clean_json(machine.context.history[-1]['assistant'])
+                        print(json_out)
+                        if json_out != "":
+                            for link in task["produces"]:
+                                link = Link.model_validate(link)
+                                link.set_value(json.loads(json_out)[link.link_name])
                             break
-                            
-                        if not machine.process_input(user_input):
-                            print(f"Processing failed: {machine.error_message}")
-                            break
-            
-            finally:
-                machine.terminate()
-            
-            
-            return {"output": input_content["code"]}
-
-
-                
-            def execute_scrapybara(task: Task, input_content: Dict):
-                """
-                :param task: Task
-                :param input_content: Dict
-                :return: Dict
-                """
-                machine = ScrapybaraStateMachine(api_key="scrapy-ba5a584d-71d5-4688-92bc-347c96a6e638")
-                
-                # Initialize with file input
-                input_file = Path(__file__).parent / 'input.txt'
-                if not machine.initialize(InputType.TEXT, str(input_file)):
-                    print(f"Initialization failed: {machine.error_message}")
-                    return
-                
-                try:
-                    # Main interaction loop
-                    while machine.state != State.TERMINATED:
-                        if machine.state == State.ERROR:
-                            print(f"Error occurred: {machine.error_message}")
-                            break
-                            
-                        if machine.state in [State.READY, State.WAITING_FOR_INPUT]:
-                            print("\n[Enter your question or 'q' to quit]")
+                        else:
+                            print("\n[Enter your answer/instruction or 'q' to quit]")
                             user_input = input("> ")
                             
                             if user_input.lower() == 'q':
@@ -305,10 +274,50 @@ async def execute_task(task: Dict) -> Any: #Changed execution format to pass in 
                             if not machine.process_input(user_input):
                                 print(f"Processing failed: {machine.error_message}")
                                 break
+            
+            finally:
+                machine.terminate()
+            
+            
+            return machine.context.history[-1]['assistant']
+
+
                 
-                finally:
-                    machine.terminate()
-                return {"output": input_content["code"]}
+            # def execute_scrapybara(task: Task, input_content: Dict):
+            #     """
+            #     :param task: Task
+            #     :param input_content: Dict
+            #     :return: Dict
+            #     """
+            #     machine = ScrapybaraStateMachine(api_key="scrapy-ba5a584d-71d5-4688-92bc-347c96a6e638")
+                
+            #     # Initialize with file input
+            #     input_file = Path(__file__).parent / 'input.txt'
+            #     if not machine.initialize(InputType.TEXT, str(input_file)):
+            #         print(f"Initialization failed: {machine.error_message}")
+            #         return
+                
+            #     try:
+            #         # Main interaction loop
+            #         while machine.state != State.TERMINATED:
+            #             if machine.state == State.ERROR:
+            #                 print(f"Error occurred: {machine.error_message}")
+            #                 break
+                            
+            #             if machine.state in [State.READY, State.WAITING_FOR_INPUT]:
+            #                 print("\n[Enter your question or 'q' to quit]")
+            #                 user_input = input("> ")
+                            
+            #                 if user_input.lower() == 'q':
+            #                     break
+                                
+            #                 if not machine.process_input(user_input):
+            #                     print(f"Processing failed: {machine.error_message}")
+            #                     break
+                
+            #     finally:
+            #         machine.terminate()
+            #     return {"output": input_content["code"]}
         else:
             return "Invalid tool selection"
     except Exception as e:
