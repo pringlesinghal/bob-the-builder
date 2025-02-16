@@ -1,0 +1,231 @@
+{
+    "model": {
+        "provider": "anthropic",
+        "name": "claude-3-5-sonnet-20241022"
+    },
+    "system": "<SYSTEM_CAPABILITY>\n* You have access to an Ubuntu virtual machine with internet connectivity\n* You can install Ubuntu applications using the bash tool (use curl over wget)\n* To run GUI applications with the bash tool, use a subshell, e.g. \"(DISPLAY=:1 xterm &)\", make sure to include the parantheses\n* GUI apps will appear but may take time to load - confirm with an extra screenshot\n* Chromium is the default browser\n* Start Chromium via the bash tool \"(DISPLAY=:1 chromium &)\", but interact with it visually via the computer tool\n* If you need to read a full PDF after initial screenshot\n  - Download with curl\n  - Convert to text using pdftotext\n  - Read the text file with StrReplaceEditTool\n* If you need to read a HTML file:\n  - Open with the address bar in Chromium\n* For commands with large text output:\n  - Redirect to a temp file\n  - Use str_replace_editor or grep with context (-B and -A flags) to view output\n* When viewing pages:\n  - Zoom out to see full content, or\n  - Scroll to ensure you see everything\n* When interacting with a field, always clear the field first using \"ctrl+A\" and \"delete\"\n  - Take an extra screenshot after clicking \"enter\" to confirm the field is properly submitted and move the mouse to the next field\n* Computer function calls take time, string together calls when possible\n* You are allowed to take actions on behalf of the user on sites that are authenticated\n* If the user asks you to access a site, assume that the user has already authenticated\n* To login additional sites, ask the user to use Auth Contexts or the Interactive Desktop\n* If first screenshot shows black screen:\n  - Click mouse in screen center\n  - Take another screenshot\n* Today's date is Saturday, February 15, 2025\n</SYSTEM_CAPABILITY>\n\n<IMPORTANT>\n* If given a complex task, break down into smaller steps and ask the user for details only if necessary\n* Read through web pages thoroughly by scrolling down till the end\n* Be concise!\n</IMPORTANT>",
+    "messages": [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "\n\nCurrent request: Research the work of the top 10 researchers in computer vision as of 2024 and summarize their major contributions during that year."
+                }
+            ]
+        }
+    ],
+    "tools": [
+        {
+            "name": "bash",
+            "description": "Execute bash commands in the shell",
+            "parameters": {
+                "description": "Parameters for bash command execution.",
+                "properties": {
+                    "command": {
+                        "description": "The bash command to execute",
+                        "title": "Command",
+                        "type": "string"
+                    },
+                    "restart": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": false,
+                        "description": "Whether to restart the shell",
+                        "title": "Restart"
+                    }
+                },
+                "required": [
+                    "command"
+                ],
+                "title": "BashToolParameters",
+                "type": "object"
+            }
+        },
+        {
+            "name": "computer",
+            "description": "Control mouse and keyboard for computer interaction",
+            "parameters": {
+                "description": "Parameters for computer interaction commands.",
+                "properties": {
+                    "action": {
+                        "anyOf": [
+                            {
+                                "enum": [
+                                    "key",
+                                    "type",
+                                    "mouse_move",
+                                    "left_click",
+                                    "left_click_drag",
+                                    "right_click",
+                                    "middle_click",
+                                    "double_click",
+                                    "screenshot",
+                                    "cursor_position",
+                                    "scroll",
+                                    "wait"
+                                ],
+                                "type": "string"
+                            },
+                            {}
+                        ],
+                        "description": "The computer action to execute",
+                        "title": "Action"
+                    },
+                    "coordinate": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "Coordinates for mouse actions",
+                        "title": "Coordinate"
+                    },
+                    "text": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "Text for keyboard actions",
+                        "title": "Text"
+                    }
+                },
+                "required": [
+                    "action"
+                ],
+                "title": "ComputerToolParameters",
+                "type": "object"
+            }
+        },
+        {
+            "name": "str_replace_editor",
+            "description": "View, create, and edit files in the filesystem",
+            "parameters": {
+                "description": "Parameters for file editing commands.",
+                "properties": {
+                    "command": {
+                        "anyOf": [
+                            {
+                                "enum": [
+                                    "view",
+                                    "create",
+                                    "str_replace",
+                                    "insert",
+                                    "undo_edit"
+                                ],
+                                "type": "string"
+                            },
+                            {}
+                        ],
+                        "description": "The edit command to execute",
+                        "title": "Command"
+                    },
+                    "path": {
+                        "description": "Path to the file to edit",
+                        "title": "Path",
+                        "type": "string"
+                    },
+                    "file_text": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "File content for create command",
+                        "title": "File Text"
+                    },
+                    "view_range": {
+                        "anyOf": [
+                            {
+                                "maxItems": 2,
+                                "minItems": 2,
+                                "prefixItems": [
+                                    {
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "type": "integer"
+                                    }
+                                ],
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "Line range for view command",
+                        "title": "View Range"
+                    },
+                    "old_str": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "String to replace for replace command",
+                        "title": "Old Str"
+                    },
+                    "new_str": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "New string for replace command",
+                        "title": "New Str"
+                    },
+                    "insert_line": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "default": null,
+                        "description": "Line number for insert command",
+                        "title": "Insert Line"
+                    }
+                },
+                "required": [
+                    "command",
+                    "path"
+                ],
+                "title": "EditToolParameters",
+                "type": "object"
+            }
+        }
+    ]
+}
