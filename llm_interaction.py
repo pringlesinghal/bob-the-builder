@@ -1,17 +1,18 @@
 # llm_interaction.py
+import re
 import json
 from typing import Dict, List
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, SystemMessage
 from jsonschema import validate, ValidationError
-from config import chat_model, MAX_RETRIES, MAX_SUBTASKS  # Import chat model
+from config import chat_model, MAX_RETRIES, MAX_SUBTASKS, clean_json  # Import chat model
 
 async def a_transform_prompt(prompt: str, schema: Dict, parent_context: str = "") -> Dict:
     schema_string = json.dumps(schema)
     system_message = SystemMessage(
         content="You are an AI assistant specialized in creating clear, concise JSON objects following a schema.")
     human_message = HumanMessage(
-        content=f"Convert the following prompt into a task: {prompt}\n\nFollowing the JSON schema: {schema_string}\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach this task conversion. Then, output the JSON representation of the task. Set subtasks to [] (empty list)\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: [JSON representation of the task]\n\nOnly output the reasoning and JSON representation of the task as described above.")
+        content=f"Convert the following prompt into a task: {prompt}\n\nFollowing the JSON schema: {schema_string}\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach this task conversion. Then, output the JSON representation of the task. Set subtasks to [] (empty list)\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: ```json[JSON representation of the task]```\n\nOnly output the reasoning and JSON representation of the task as described above.")
 
     chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
 
@@ -19,9 +20,14 @@ async def a_transform_prompt(prompt: str, schema: Dict, parent_context: str = ""
         try:
             response = await chat_model.ainvoke(chat_prompt.format_messages())
             response_content = response.content
+            # print(response_content)
             reasoning, action = response_content.split("Action:", 1)
             task_json_string = action.strip()
-            task = json.loads(task_json_string)
+            cleaned_json_string = clean_json(task_json_string)
+            if cleaned_json_string == "":
+                raise ValueError(f"Badly formatted JSON string: {task_json_string}")
+            task = json.loads(cleaned_json_string)
+            print(task)
             validate(instance=task, schema=schema)
             return task
         except (ValidationError, json.JSONDecodeError, ValueError) as e:
@@ -34,7 +40,7 @@ async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) ->
     schema_string = json.dumps(schema)
     task_dict = json.dumps(task)
     system_message = SystemMessage(content="You are an AI assistant specialized in task decomposition.")
-    human_message = HumanMessage(content=f"Given the task JSON:\n{task_dict}\nReturn a list of independent subtasks (maximum {MAX_SUBTASKS}). Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n{schema_string}\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach breaking down this task. Then, output the list of subtasks in JSON format. Each subtask JSON should have 'subtasks' set to [] (empty list).\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: [JSON list of up to {MAX_SUBTASKS}subtasks]\n\nOnly output the reasoning and JSON list of subtasks as described above.")
+    human_message = HumanMessage(content=f"Given the task JSON:\n{task_dict}\nReturn a list of independent subtasks (maximum {MAX_SUBTASKS}). Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n```json{schema_string}```\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach breaking down this task. Then, output the list of subtasks in JSON format. Each subtask JSON should have 'subtasks' set to [] (empty list).\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: ```json[JSON list of up to {MAX_SUBTASKS}subtasks]```\n\nOnly output the reasoning and JSON list of subtasks as described above.")
     
     chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
     
@@ -44,6 +50,10 @@ async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) ->
             response_content = response.content
             reasoning, action = response_content.split("Action:", 1)
             subtasks_json_string = action.strip()
+            subtasks_json_string = clean_json(subtasks_json_string)
+            if subtasks_json_string == "":
+                raise ValueError(f"Badly formatted JSON string: {subtasks_json_string}")
+            print(subtasks_json_string)
             subtasks = json.loads(subtasks_json_string)
             # TODO: handle this exception better
             if len(subtasks) > MAX_SUBTASKS:
@@ -149,9 +159,10 @@ async def a_generate_code(task_description: str, input_schema: Dict, output_sche
 
 The function should:
 - Take inputs according to the following JSON schema: {json.dumps(input_schema)}
-- Produce an output named "final_code_output_json" that adheres to the following JSON schema: {json.dumps(output_schema)}
+- Print to console an output named "final_code_output_json" that adheres to the following JSON schema: {json.dumps(output_schema)}
 - Be well-commented and easy to understand.
 - Import any libraries that it may need.
+- The function should only print "final_code_output_json", not anything else.
 
 Output ONLY the complete Python function code, including imports and function definition. Do not include any surrounding text or explanations."""
     try:

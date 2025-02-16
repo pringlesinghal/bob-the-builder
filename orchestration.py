@@ -9,6 +9,7 @@ async def a_generate_task_tree(prompt: str, schema: Dict, task_manager: TaskMana
     # print(f"{schema['$defs']['Task'].keys()=}")
     # TODO: clean up
     task = await a_transform_prompt(prompt, schema, "")
+    task["ingests"] = []
     if not task:
         raise Exception("Failed to generate task from user prompt")
     task_queue = [(task, 0, None, "")]
@@ -42,6 +43,7 @@ async def a_generate_task_tree(prompt: str, schema: Dict, task_manager: TaskMana
         if current_depth not in tasks_by_depth:
             tasks_by_depth[current_depth] = []
         tasks_by_depth[current_depth].append(current_task)
+        print(current_task)
         if selected_tool == 'D':  # Only decompose if "Mix of Tools" is selected
             subtasks = await a_decompose_subtasks(current_task, schema, parent_context)
             if subtasks:
@@ -49,6 +51,6 @@ async def a_generate_task_tree(prompt: str, schema: Dict, task_manager: TaskMana
                 for subtask in subtasks:
                     task_queue.append((subtask, current_depth + 1, current_task, new_parent_context))
         else:
-            current_task['result'] = execute_task(current_task)
+            current_task['result'] = await execute_task(current_task)
 
     return root_task, tasks_by_depth
