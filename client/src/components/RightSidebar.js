@@ -1,6 +1,10 @@
 import React from 'react';
 
-const RightSidebar = ({ isOpen, onClose, selectedNode, onSave }) => {
+const RightSidebar = ({ isOpen, onClose, selectedNode }) => {
+  // Extract input and output parameters from the selected node
+  const inputLinks = selectedNode?.data?.ingests?.map(ingest => ingest.link_name) || [];
+  const outputLinks = selectedNode?.data?.produces?.map(produce => produce.link_name) || [];
+
   return (
     <div 
       className={`fixed top-[150px] right-0 h-[calc(100vh-150px)] w-96 bg-gray-50/20 backdrop-blur-sm transform transition-transform duration-300 ease-in-out ${
@@ -18,33 +22,54 @@ const RightSidebar = ({ isOpen, onClose, selectedNode, onSave }) => {
       </button>
 
       {/* Content container */}
-      <div className="p-6 h-full flex flex-col space-y-2 overflow-y-auto">
-        {/* Current Description */}
-        <div className="flex-1">
-          <h3 className="text-2xl font-semibold mb-1 text-gray-700">Current Description</h3>
-          <textarea
-            className="w-full h-48 p-4 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
-            defaultValue={selectedNode?.data?.task_description || ''}
-            placeholder="No description available"
-          />
+      <div className="p-6 h-full flex flex-col space-y-4 overflow-y-auto">
+        {/* Task Name */}
+        <div>
+          <h3 className="text-xl font-semibold text-gray-700">Task Name</h3>
+          <p className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg text-gray-800">
+            {selectedNode?.data?.task_name || 'No task name available'}
+          </p>
         </div>
 
-        {/* New Prompt */}
-        <div className="flex-1">
-          <h3 className="text-2xl font-semibold mb-1 text-gray-700">New Prompt</h3>
-          <textarea
-            className="w-full h-48 p-4 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
-            placeholder="Enter new prompt..."
-          />
+        {/* Task Description */}
+        <div>
+          <h3 className="text-xl font-semibold text-gray-700">Task Description</h3>
+          <p className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg text-gray-800 whitespace-pre-wrap">
+            {selectedNode?.data?.task_description || 'No description available'}
+          </p>
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={onSave}
-          className="w-full bg-blue-600/80 backdrop-blur-sm text-white py-3 rounded-lg hover:bg-blue-700/90 transition-all duration-200 mb-6"
-        >
-          Save Changes
-        </button>
+        {/* Input Parameters */}
+        <div>
+          <h3 className="text-xl font-semibold text-gray-700">Input Parameters</h3>
+          <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg">
+            {inputLinks.length > 0 ? (
+              <ul className="list-disc list-inside space-y-1">
+                {inputLinks.map((link, index) => (
+                  <li key={index} className="text-gray-800">{link}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600">No input parameters</p>
+            )}
+          </div>
+        </div>
+
+        {/* Output Parameters */}
+        <div>
+          <h3 className="text-xl font-semibold text-gray-700">Output Parameters</h3>
+          <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg">
+            {outputLinks.length > 0 ? (
+              <ul className="list-disc list-inside space-y-1">
+                {outputLinks.map((link, index) => (
+                  <li key={index} className="text-gray-800">{link}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600">No output parameters</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

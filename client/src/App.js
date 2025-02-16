@@ -1,6 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-// import io from 'socket.io-client';
-
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   addEdge,
@@ -22,7 +20,6 @@ import BranchedEdge from './components/BranchedEdge';
 import SubtaskNode from './components/SubtaskNode';
 import RightSidebar from './components/RightSidebar';
 import dummyTasks from './dummydata.json';
-import axios from 'axios';
 
 console.log('Loaded dummy tasks:', dummyTasks);
 
@@ -175,7 +172,6 @@ console.log('Available edge types:', Object.keys(edgeTypes));
 
 function App() {
   // Add CSS to ensure the app takes full viewport height
-  
   React.useEffect(() => {
     document.body.style.margin = '0';
     document.body.style.height = '100vh';
@@ -544,44 +540,14 @@ function App() {
     }, 100);
   };
 
-  // const [socket, setSocket] = useState(null);
-
-  // useEffect(() => {
-  //   const newSocket = io('http://localhost:5000');
-  //   setSocket(newSocket);
-
-  //   newSocket.on('new_task_tree', (data) => {
-  //     console.log('Received new task tree:', data);
-  //     createNodesAndEdges(data);
-  //   });
-
-  //   return () => newSocket.close();
-  // }, []);
-
-  const handleSendClick = useCallback(() => {
+  // Function to handle send button click
+  const handleSendClick = () => {
     if (prompt.trim()) {
-      // Make a POST request to your Flask endpoint
-      axios.post('http://127.0.0.1:5000/api/generate_task_tree', { prompt: prompt })
-        .then(response => {
-          console.log('API Response:', response.data);
-          // Assuming the response data is the task tree data
-          createNodesAndEdges(response.data); // Process the received data
-        })
-        .catch(error => {
-          console.error('Error fetching task tree:', error);
-          // Handle errors appropriately (e.g., display an error message)
-        });
+      console.log('Handling send click with dummy tasks:', dummyTasks.subtasks);
+      createNodesAndEdges(dummyTasks.subtasks);
+      // Keeping prompt in the text bar
     }
-  }, [prompt]);
-
-  // // Function to handle send button click
-  // const handleSendClick = () => {
-  //   if (prompt.trim()) {
-  //     console.log('Handling send click with dummy tasks:', dummyTasks.subtasks);
-  //     createNodesAndEdges(dummyTasks.subtasks);
-  //     // Keeping prompt in the text bar
-  //   }
-  // };
+  };
 
   const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
