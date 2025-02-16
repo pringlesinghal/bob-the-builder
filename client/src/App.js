@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import io from 'socket.io-client';
 import {
   ReactFlow,
   addEdge,
@@ -172,6 +173,7 @@ console.log('Available edge types:', Object.keys(edgeTypes));
 
 function App() {
   // Add CSS to ensure the app takes full viewport height
+  
   React.useEffect(() => {
     document.body.style.margin = '0';
     document.body.style.height = '100vh';
@@ -540,14 +542,34 @@ function App() {
     }, 100);
   };
 
-  // Function to handle send button click
-  const handleSendClick = () => {
-    if (prompt.trim()) {
-      console.log('Handling send click with dummy tasks:', dummyTasks.subtasks);
-      createNodesAndEdges(dummyTasks.subtasks);
-      // Keeping prompt in the text bar
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    newSocket.on('new_task_tree', (data) => {
+      console.log('Received new task tree:', data);
+      createNodesAndEdges(data);
+    });
+
+    return () => newSocket.close();
+  }, []);
+
+  const handleSendClick = useCallback(() => {
+    if (prompt.trim() && socket) {
+      socket.emit('generate_tree', { prompt: prompt });
     }
-  };
+  }, [prompt, socket]);
+
+  // // Function to handle send button click
+  // const handleSendClick = () => {
+  //   if (prompt.trim()) {
+  //     console.log('Handling send click with dummy tasks:', dummyTasks.subtasks);
+  //     createNodesAndEdges(dummyTasks.subtasks);
+  //     // Keeping prompt in the text bar
+  //   }
+  // };
 
   const onNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
