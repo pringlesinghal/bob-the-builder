@@ -1,0 +1,151 @@
+[
+  {
+    "task_id": "1",
+    "task_name": "Task 1",
+    "task_description": "Initial Task",
+    "dependencies": [],
+    "produces": [
+      {
+        "link_id": "link1_1",
+        "link_name": "Output 1",
+        "link_description": "First output",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 1"
+      }
+    ],
+    "completed": true,
+    "subtasks": [
+      {
+        "task_id": "1_1",
+        "task_name": "Subtask A",
+        "task_description": "Subtask A of Task 1",
+        "dependencies": [],
+        "produces": [],
+        "completed": false
+      },
+      {
+        "task_id": "1_2",
+        "task_name": "Subtask B",
+        "task_description": "Subtask B of Task 1",
+        "dependencies": [],
+        "produces": [],
+        "completed": false
+      }
+    ]
+  },
+  {
+    "task_id": "2",
+    "task_name": "Task 2",
+    "task_description": "Second Task",
+    "dependencies": ["1"],
+    "produces": [
+      {
+        "link_id": "link2_1",
+        "link_name": "Output 1",
+        "link_description": "Second output",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 2"
+      }
+    ],
+    "completed": false,
+    "subtasks": [
+      {
+        "task_id": "2_1",
+        "task_name": "Subtask C",
+        "task_description": "Subtask C of Task 2",
+        "dependencies": ["1_2"],
+        "produces": [],
+        "completed": false
+      }
+    ]
+  },
+  {
+    "task_id": "3",
+    "task_name": "Task 3",
+    "task_description": "Third Task",
+    "dependencies": ["1", "2"],
+    "produces": [
+      {
+        "link_id": "link3_1",
+        "link_name": "Output 1",
+        "link_description": "Third output",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 3"
+      },
+      {
+        "link_id": "link3_2",
+        "link_name": "Output 3_",
+        "link_description": "Third output2",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 1331"
+      }
+    ],
+    "completed": false,
+    "subtasks": []
+  },
+  {
+    "task_id": "4",
+    "task_name": "Task 4",
+    "task_description": "Fourth Task",
+    "dependencies": ["2", "3"],
+    "produces": [
+      {
+        "link_id": "link4_1",
+        "link_name": "Output 1",
+        "link_description": "Fourth output",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 4"
+      }
+    ],
+    "completed": false,
+    "subtasks": [
+      {
+        "task_id": "4_1",
+        "task_name": "Subtask D",
+        "task_description": "Subtask D of Task 4",
+        "dependencies": [],
+        "produces": [],
+        "completed": false
+      },
+      {
+        "task_id": "4_2",
+        "task_name": "Subtask E",
+        "task_description": "Subtask E of Task 4",
+        "dependencies": [],
+        "produces": [],
+        "completed": false
+      },
+      {
+        "task_id": "4_3",
+        "task_name": "Subtask F",
+        "task_description": "Subtask F of Task 4",
+        "dependencies": [],
+        "produces": [],
+        "completed": false
+      }
+    ]
+  },
+  {
+    "task_id": "5",
+    "task_name": "Task 5",
+    "task_description": "Fifth Task",
+    "dependencies": ["3", "4"],
+    "produces": [
+      {
+        "link_id": "link5_1",
+        "link_name": "Output 1",
+        "link_description": "Fifth output",
+        "data_type": "string",
+        "data_source_type": "local",
+        "value": "Value 5"
+      }
+    ],
+    "completed": false,
+    "subtasks": []
+  }
+]
