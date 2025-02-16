@@ -16,6 +16,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"  # Default False if not set
 LANGCHAIN_ENDPOINT = os.getenv("LANGCHAIN_ENDPOINT")
 LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
+SCRAP_API_KEY = os.getenv("SCRAP_API_KEY")
 
 # LangSmith Client
 client = Client(api_key=LANGCHAIN_API_KEY)
