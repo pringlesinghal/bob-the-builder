@@ -1,0 +1,28 @@
+{
+    "task_id": "purchase_best_gaming_laptop",
+    "task_name": "Purchase Best Gaming Laptop",
+    "task_description": "Research, select, and purchase the best gaming laptop available, then return the order details of the purchase.",
+    "ingests": [
+        {
+            "link_id": "best_gaming_laptop_info",
+            "link_name": "Best Gaming Laptop Information",
+            "link_description": "Research and reviews on the current best gaming laptops",
+            "data_type": "dict",
+            "data_source_type": "task"
+        }
+    ],
+    "produces": [
+        {
+            "link_id": "order_details",
+            "link_name": "Order Details",
+            "link_description": "Details of the purchased gaming laptop order",
+            "data_type": "dict",
+            "data_source_type": "task"
+        }
+    ],
+    "subtasks": [],
+    "completed": false,
+    "selected_tool": "B",
+    "depth": 0,
+    "result": "Result of executing task: Research, select, and purchase the best gaming laptop available, then return the order details of the purchase."
+}
