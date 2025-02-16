@@ -1,46 +1,63 @@
-# main.py
-import asyncio
-import os
-from schemas import Task
-from config import LANGCHAIN_TRACING_V2, chat_model
-from task_manager import TaskManager
-from orchestration import a_generate_task_tree
-from tree_utils import print_task_tree
-from evaluation import evaluate_task_decomposition
-from langchain_core.tracers.context import tracing_v2_enabled
-import json
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+import asyncio #Import asyncio
+import logging
+from schemas import Task  # Import Task
+from task_manager import TaskManager  # Import TaskManager
+from orchestration import a_generate_task_tree  # Import a_generate_task_tree
+
+# Configure logging (optional but recommended)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Global variables to store the latest task tree
-root_task = None
-tasks_by_depth = None
+# Configure CORS (Cross-Origin Resource Sharing)
+# IMPORTANT: Adjust 'origins' for your actual deployment environment!
+cors = CORS(
+    app,
+    resources={
+        r"/*": {  # Apply to all routes
+            "origins": ["http://localhost:3000"],  # Your React app's origin (DEVELOPMENT)
+            "methods": ["GET", "POST", "OPTIONS"],  # Allowed HTTP methods
+            "allow_headers": ["Content-Type"],  # Allowed headers in requests
+            "supports_credentials": True,  # Allow sending cookies/credentials
+        }
+    },
+    supports_credentials=True,  # Enable CORS for the entire app
+)
 
-@socketio.on('generate_tree')
-def handle_generate_tree(message):
-    global root_task, tasks_by_depth
-    prompt = message['prompt']
-    print(f"Received prompt: {prompt}")
-    
-    async def generate():
-        global root_task, tasks_by_depth
+# New Flask route to handle task tree generation
+@app.route("/api/generate_task_tree", methods=["POST"])
+def generate_task_tree_route():
+    try:
+        prompt = request.json.get("prompt")  # Get the prompt from the request body
+        if not prompt:
+            return jsonify({"error": "Prompt is required"}), 400
+
+        # --- Your task tree generation logic here ---
+        # Call a_generate_task_tree and return the root_task
         task_manager = TaskManager()
-        root_task, tasks_by_depth = await a_generate_task_tree(prompt, Task.model_json_schema(), task_manager)
-        return root_task
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    root_task = loop.run_until_complete(generate())
-    
-    if root_task:
-        emit('new_task_tree', root_task.dict())
-    else:
-        emit('generation_failed')
+        async def generate(): # Define an async function to run the async task
+            root_task, tasks_by_depth = await a_generate_task_tree(prompt, Task.model_json_schema(), task_manager)
+            return root_task
+
+        loop = asyncio.new_event_loop() #Create a new event loop
+        asyncio.set_event_loop(loop) #Set the loop as the current loop
+        root_task = loop.run_until_complete(generate()) # Run the async function until it is complete
+
+        if root_task:
+            return jsonify(root_task)  # Serialize and return root_task as JSON
+        else:
+            return jsonify({"error": "Task generation failed"}), 500
+
+    except Exception as e:
+        logger.exception("Error generating task tree")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000)
+    app.run(debug=True, port=5000)
+
+

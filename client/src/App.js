@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import io from 'socket.io-client';
+// import io from 'socket.io-client';
+
 import {
   ReactFlow,
   addEdge,
@@ -21,6 +22,7 @@ import BranchedEdge from './components/BranchedEdge';
 import SubtaskNode from './components/SubtaskNode';
 import RightSidebar from './components/RightSidebar';
 import dummyTasks from './dummydata.json';
+import axios from 'axios';
 
 console.log('Loaded dummy tasks:', dummyTasks);
 
@@ -542,25 +544,35 @@ function App() {
     }, 100);
   };
 
-  const [socket, setSocket] = useState(null);
+  // const [socket, setSocket] = useState(null);
 
-  useEffect(() => {
-    const newSocket = io('http://localhost:5000');
-    setSocket(newSocket);
+  // useEffect(() => {
+  //   const newSocket = io('http://localhost:5000');
+  //   setSocket(newSocket);
 
-    newSocket.on('new_task_tree', (data) => {
-      console.log('Received new task tree:', data);
-      createNodesAndEdges(data);
-    });
+  //   newSocket.on('new_task_tree', (data) => {
+  //     console.log('Received new task tree:', data);
+  //     createNodesAndEdges(data);
+  //   });
 
-    return () => newSocket.close();
-  }, []);
+  //   return () => newSocket.close();
+  // }, []);
 
   const handleSendClick = useCallback(() => {
-    if (prompt.trim() && socket) {
-      socket.emit('generate_tree', { prompt: prompt });
+    if (prompt.trim()) {
+      // Make a POST request to your Flask endpoint
+      axios.post('http://127.0.0.1:5000/api/generate_task_tree', { prompt: prompt })
+        .then(response => {
+          console.log('API Response:', response.data);
+          // Assuming the response data is the task tree data
+          createNodesAndEdges(response.data); // Process the received data
+        })
+        .catch(error => {
+          console.error('Error fetching task tree:', error);
+          // Handle errors appropriately (e.g., display an error message)
+        });
     }
-  }, [prompt, socket]);
+  }, [prompt]);
 
   // // Function to handle send button click
   // const handleSendClick = () => {
