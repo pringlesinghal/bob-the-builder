@@ -53,6 +53,48 @@ async def main():
 
     print(f"\nTotal tasks generated: {task_manager.get_task_count()}")
 
+    # print("STARTING EXECUTION OF TASKS:..........................")
+    # futures = await traverse_task_tree(full_task)
+    
+    # async def wait_for_futures(futures_dict):
+    #     """Recursively wait for all futures in the tree"""
+    #     try:
+    #         # Wait for current task
+    #         await futures_dict['task_future']
+            
+    #         # Wait for all subtasks
+    #         for subtask_future in futures_dict['subtask_futures']:
+    #             await wait_for_futures(await subtask_future)
+    #     except Exception as e:
+    #         print(f"Error in task execution: {str(e)}")
+    
+    # # Start monitoring task completion in the background
+    # monitor_task = asyncio.create_task(wait_for_futures(futures))
+    
+    # # Your code can continue here without waiting for tasks to complete
+    # # The Link events will handle dependencies between tasks
+    
+    # # If you need to wait for everything at the very end:
+    # await monitor_task
+
+async def traverse_task_tree(task: Dict):
+    """Start execution of all tasks in the tree immediately.
+    Tasks will handle their own dependencies through Link events."""
+    
+    # Start current task execution without awaiting
+    task_future = asyncio.create_task(execute_task(task))
+    
+    # Start all subtasks immediately
+    subtask_futures = [
+        asyncio.create_task(traverse_task_tree(subtask))
+        for subtask in task.get('subtasks', [])
+    ]
+    
+    # Return all futures without waiting
+    return {
+        'task_future': task_future,
+        'subtask_futures': subtask_futures
+    }
 
 def validate_task(task: Dict, schema: Dict): #Keeping this function here since it is tiny
     try:
