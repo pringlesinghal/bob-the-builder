@@ -1,0 +1,1815 @@
+# File: config.py
+
+# config.py
+import os
+from dotenv import load_dotenv
+from langchain_community.chat_models import ChatPerplexity
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langsmith import Client
+
+from langchain_openai import OpenAI
+
+load_dotenv()
+
+# API Keys and Environment Variables
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"  # Default False if not set
+LANGCHAIN_ENDPOINT = os.getenv("LANGCHAIN_ENDPOINT")
+LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
+
+# LangSmith Client
+client = Client(api_key=LANGCHAIN_API_KEY)
+
+# Perplexity Chat Model
+perplexity_model = ChatPerplexity(
+    model="sonar-pro",
+    temperature=0,
+    pplx_api_key=PERPLEXITY_API_KEY,
+    model_kwargs={"seed": 42},  # Set seed for reproducibility
+)
+
+# Gemini Chat Model
+gemini_model = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash-thinking-exp",
+    google_api_key=GOOGLE_API_KEY
+)
+
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import BaseMessage
+from langchain_core.runnables import RunnableConfig
+from typing import Any, Optional
+
+from langchain_core.messages import AIMessage
+from langchain_openai import ChatOpenAI
+
+class CustomChatOpenAI(ChatOpenAI):
+    async def ainvoke(self, input: Any, config: Optional[RunnableConfig] = None, **kwargs: Any) -> BaseMessage:
+        # Call the parent class's ainvoke method
+        response = await super().ainvoke(input, config, **kwargs)
+        
+        # Convert the string response to an AIMessage
+        if isinstance(response, str):
+            return AIMessage(content=response)
+        elif isinstance(response, BaseMessage):
+            return response
+        else:
+            raise ValueError(f"Unexpected response type: {type(response)}")
+
+openai_model = CustomChatOpenAI(api_key=OPENAI_API_KEY)
+
+chat_model = perplexity_model
+
+# Model configurations
+perplexity_config = {
+    "max_tokens": 4096,
+    "temperature": 0,
+    "top_p": 1.0
+}
+
+gemini_config = {
+    "max_tokens": 4096,
+    "temperature": 0.7,
+    "top_p": 0.9
+}
+
+# Configuration parameters (can be overwritten by command line arguments or other environment variables)
+MAX_TASKS = 20
+SIMILARITY_THRESHOLD = 0.8
+MAX_RETRIES = 5
+MAX_DEPTH = 5
+MAX_SUBTASKS = 5
+
+
+import re
+import json
+import regex
+def clean_json(task_json_string: str) -> str:
+    json_content = re.search(r'```json\n(.*?)\n```', task_json_string, re.DOTALL)
+    if json_content:
+        return json_content.group(1)
+    else:
+        pattern = r'\{(?:[^{}]|(?R))*\}'
+        match = regex.search(pattern, task_json_string)
+        if match:
+            return match.group()
+        else:
+            return ""
+
+# File: evaluation.py
+
+from langchain.evaluation import load_evaluator
+from config import chat_model #Import chat model
+import json
+
+def evaluate_task_decomposition(task):
+    evaluator = load_evaluator("criteria",
+    criteria={
+    "completeness": "Does the decomposition cover all aspects of the task?",
+    "actionability": "Are the subtasks concrete and actionable?",
+    "independence": "Are the subtasks sufficiently independent?"
+    },
+    llm=chat_model # Use the ChatPerplexity model for evaluation
+    )
+
+    evaluation = evaluator.evaluate_strings(
+        prediction=json.dumps(task, indent=2),
+        input=task['task_description']
+    )
+
+    return evaluation
+
+# File: llm_interaction.py
+
+# llm_interaction.py
+import re
+import json
+from typing import Dict, List
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
+from jsonschema import validate, ValidationError
+from config import chat_model, MAX_RETRIES, MAX_SUBTASKS, clean_json  # Import chat model
+
+async def a_transform_prompt(prompt: str, schema: Dict, parent_context: str = "") -> Dict:
+    schema_string = json.dumps(schema)
+    system_message = SystemMessage(
+        content="You are an AI assistant specialized in creating clear, concise JSON objects following a schema.")
+    human_message = HumanMessage(
+        content=f"Convert the following prompt into a task: {prompt}\n\nFollowing the JSON schema: {schema_string}\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach this task conversion. Then, output the JSON representation of the task. Set subtasks to [] (empty list)\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: ```json[JSON representation of the task]```\n\nOnly output the reasoning and JSON representation of the task as described above.")
+
+    chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
+
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = await chat_model.ainvoke(chat_prompt.format_messages())
+            response_content = response.content
+            # print(response_content)
+            reasoning, action = response_content.split("Action:", 1)
+            task_json_string = action.strip()
+            cleaned_json_string = clean_json(task_json_string)
+            if cleaned_json_string == "":
+                raise ValueError(f"Badly formatted JSON string: {task_json_string}")
+            task = json.loads(cleaned_json_string)
+            print(task)
+            validate(instance=task, schema=schema)
+            return task
+        except (ValidationError, json.JSONDecodeError, ValueError) as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt == MAX_RETRIES - 1:
+                print(f"Error in task generation after {MAX_RETRIES} attempts.")
+                return None #Return None if error persists
+
+async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) -> List[Dict]:
+    schema_string = json.dumps(schema)
+    task_dict = json.dumps(task)
+    system_message = SystemMessage(content="You are an AI assistant specialized in task decomposition.")
+    human_message = HumanMessage(content=f"Given the task JSON:\n{task_dict}\nReturn a list of independent subtasks (maximum {MAX_SUBTASKS}). Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n```json{schema_string}```\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach breaking down this task. Then, output the list of subtasks in JSON format. Each subtask JSON should have 'subtasks' set to [] (empty list).\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: ```json[JSON list of up to {MAX_SUBTASKS}subtasks]```\n\nOnly output the reasoning and JSON list of subtasks as described above.")
+    
+    chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
+    
+    for attempt in range(MAX_RETRIES): #Add retry loop
+        try:
+            response = await chat_model.ainvoke(chat_prompt.format_messages())
+            response_content = response.content
+            reasoning, action = response_content.split("Action:", 1)
+            subtasks_json_string = action.strip()
+            subtasks_json_string = clean_json(subtasks_json_string)
+            if subtasks_json_string == "":
+                raise ValueError(f"Badly formatted JSON string: {subtasks_json_string}")
+            print(subtasks_json_string)
+            subtasks = json.loads(subtasks_json_string)
+            # TODO: handle this exception better
+            if len(subtasks) > MAX_SUBTASKS:
+                raise ValueError(f"More than {MAX_SUBTASKS} subtasks generated.")
+            for subtask in subtasks[:MAX_SUBTASKS]:  # Limit to MAX_SUBTASKS subtasks
+                validate(instance=subtask, schema=schema)
+            return subtasks[:MAX_SUBTASKS]  # Return only the first MAX_SUBTASKS subtasks
+        except (ValidationError, json.JSONDecodeError, ValueError) as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt == MAX_RETRIES - 1: #If max retries reached, print to log and return None
+                print(f"Error in subtask decomposition after {MAX_RETRIES} attempts.")
+                return None
+
+async def a_select_tool(subtask: Dict, schema: Dict, depth: int, max_depth: int) -> str:
+    schema_string = json.dumps(schema)
+    subtask_dict = json.dumps(subtask)
+    human_message = HumanMessage(content=f"""Given the subtask JSON:
+{subtask_dict}
+following the schema:
+{schema_string}
+
+Current depth: {depth}
+Maximum depth: {max_depth}
+
+**Part 1: Initial Assessment and Decomposition**
+
+1. **Task Complexity & Depth Limit:**
+   - Is this task inherently complex, requiring multiple steps or diverse information sources?
+   - Is the current depth less than the maximum allowed depth ({max_depth})?
+   - IF YES to both: Choose "D) Mix of Tools" and explain how to decompose.
+     (Decomposition Strategy: Aim to isolate components best suited for computer use agents, LLM reasoning, and deterministic code.)
+   - IF NO to either: Proceed to Part 2.
+
+**Part 2: Tool Selection for Non-Decomposed (or Leaf) Tasks**
+
+Now that we've assessed complexity, consider which single tool is best suited to DIRECTLY SOLVE the task (if it wasn't chosen to be decomposed). Select ONE of the following:
+
+   A) **Deterministic Code:** (Best for precise, rule-based operations; fast & reliable)
+      - Ideal for:
+         - Data transformation (e.g., cleaning, formatting, calculations)
+         - File manipulation (e.g., downloading, parsing, format conversion)
+         - Mathematical computations & logical operations
+         - API interactions where the API is well-defined and predictable.
+      - Examples: Sorting a list, converting a date format, calculating statistics, extracting data with regular expressions.
+      - NOT Suitable: Tasks requiring nuanced understanding of natural language, creative generation, or adapting to unpredictable environments.
+
+   B) **LLM Search & Reasoning:** (Best for knowledge-intensive tasks, nuanced text understanding, creative generation; adaptable but can be less precise)
+      - Ideal for:
+         - Information retrieval from the web when the answer isn't a simple fact but requires synthesizing information from multiple sources (e.g., "What are the current trends in AI research?")
+         - Complex text analysis (e.g., sentiment analysis, summarization, topic extraction)
+         - Creative content generation (e.g., writing blog posts, generating marketing copy)
+         - Answering questions requiring reasoning and inference (e.g., "What are the potential implications of this new technology?")
+      - Examples: Researching a topic, summarizing a document, translating text, writing a creative story.
+      - NOT Suitable: Tasks requiring precise calculations, structured data manipulation, or reliable interaction with specific applications.
+
+   C) **Computer Use Agent:** (Best for interactive tasks involving websites, applications with visual interfaces, or when direct manipulation is needed; can be slow & less reliable)
+      - Ideal for:
+         - Interacting with websites (e.g., filling out forms, clicking buttons, scraping data that requires dynamic interaction)
+         - Automating tasks within desktop applications
+         - Tasks requiring continuous visual feedback or responding to changes in a UI
+         - Situations where the information source is only accessible through interactive steps.
+      - Examples: Booking a flight, filling out an online application, monitoring a website for changes.
+      - NOT Suitable: Tasks that can be solved directly with information retrieval or deterministic code, or that don't involve interactive systems.
+      - Select this by default if the task is complex but we have exceeded the maximum depth.
+**Decision Process (Choose ONE of A, B, C, or D based on which best fits the task after considering the above guidelines).**
+
+Provide your reasoning for selecting the best approach, describing the pros and cons of each option. Then, output only the selected option letter.
+
+Format your response as follows:
+Reasoning: [Your detailed reasoning here, explaining WHY you chose the selected tool and why the others are less suitable]
+Action: [Selected option letter]
+
+Only output the reasoning and selected option letter as described above."""
+    )
+        
+    chat_prompt = ChatPromptTemplate.from_messages([human_message])
+        
+    for attempt in range(MAX_RETRIES): #Add retry loop
+        try:
+            response = await chat_model.ainvoke(chat_prompt.format_messages())
+            response_content = response.content
+            reasoning, action = response_content.split("Action:", 1)
+            selected_tool = action.strip()
+            print(f"Subtask {subtask['task_id']} - Selected tool: {selected_tool}")
+            print(f"Reasoning: {reasoning.strip()}")
+            
+            if selected_tool in ['A', 'B', 'C', 'D']:
+                return selected_tool
+            else:
+                print(f"Invalid tool selection for subtask {subtask['task_id']}")
+                return None
+        except ValueError as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt == MAX_RETRIES - 1: #If max retries reached, print to log and return None
+                print(f"Error in selecting tool after {MAX_RETRIES} attempts.")
+                return None
+
+
+async def a_generate_code(task_description: str, input_schema: Dict, output_schema: Dict) -> str: #New function
+    """Generates Python code for a given task, considering input and output schemas."""
+
+    prompt = f"""You are a Python code generator. Generate a standalone Python function that performs the following task: {task_description}
+
+The function should:
+- Take inputs according to the following JSON schema: {json.dumps(input_schema)}
+- Print to console an output named "final_code_output_json" that adheres to the following JSON schema: {json.dumps(output_schema)}
+- Be well-commented and easy to understand.
+- Import any libraries that it may need.
+- The function should only print "final_code_output_json", not anything else.
+
+Output ONLY the complete Python function code, including imports and function definition. Do not include any surrounding text or explanations."""
+    try:
+        messages = [HumanMessage(content=prompt)]
+        response = await chat_model.ainvoke(messages)
+        code = response.content.strip()
+        assert "final_code_output_json" in code
+        return code
+    except Exception as e:
+        print(f"Code generation failed: {e}")
+        return None
+
+async def a_generate_llm_prompt(task_description: str, inputs: Dict, output_schema: Dict) -> str: #New function
+    """Generates a prompt for a given task given its description, considering input and output schemas."""
+
+    prompt = f"""You are a LLM prompt generator. Generate a prompt that can be used for this task: {task_description}
+
+The prompt should instruct the LLM to:
+- Take the following inputs: {json.dumps(inputs)}
+- Produce an output that adheres to the following JSON schema: {json.dumps(output_schema)}
+- Consider the context and what will enable the best reasoning and most accurate search.
+
+Output ONLY the prompt. Do not include any surrounding text or explanations."""
+    try:
+        messages = [HumanMessage(content=prompt)]
+        response = await chat_model.ainvoke(messages)
+        code = response.content.strip()
+        return code
+    except Exception as e:
+        print(f"Prompt generation failed: {e}")
+        return None
+
+# File: main.py
+
+# main.py
+import asyncio
+import os
+from schemas import Task
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema import HumanMessage, SystemMessage
+from config import LANGCHAIN_TRACING_V2, chat_model
+from task_manager import TaskManager
+from orchestration import a_generate_task_tree
+from tree_utils import print_task_tree
+from evaluation import evaluate_task_decomposition
+from langchain_core.tracers.context import tracing_v2_enabled
+import json
+from typing import Dict
+from jsonschema import validate, ValidationError
+
+async def main():
+    task_manager = TaskManager() #Creating task manager object here
+    with tracing_v2_enabled(project_name="Task Decomposition") if LANGCHAIN_TRACING_V2 else open(os.devnull, "w") as f: # only trace if the relevant flag is turned on
+        prompt = input("Enter a prompt: ")
+        # TODO: How can I transform the user prompt to be more specific and actionable for the LLM?
+        # system_message = SystemMessage(
+        #     content="You are a computer use agent capable of doing anything. Rephrase the user's task prompt to highlight the key action verbs in the user's request and identify what needs to be done.")
+        # human_message = HumanMessage(
+        #     content=f"Output a very concise task prompt to help an LLM understand the user's task prompt: {prompt}.\n\nEmphasize what action verbs are specified by the user. Only output the prompt and nothing else.")
+
+        # chat_prompt = ChatPromptTemplate.from_messages([system_message, human_message])
+
+        # response = await chat_model.ainvoke(chat_prompt.format_messages())
+        # response_content = response.content
+        # print(f"{response_content=}")
+        response_content = prompt
+
+        full_task, tasks_by_depth = await a_generate_task_tree(response_content, Task.model_json_schema(), task_manager) # Passing task_manager object
+
+        if full_task and validate_task(full_task, Task.model_json_schema()):
+             # Print tasks by depth
+            for depth in sorted(tasks_by_depth.keys()):
+                print(f"\nTasks at Depth {depth}:")
+                for task in tasks_by_depth[depth]:
+                    print(f"  - {task['task_name']}: {task['task_description']} (Tool: {task.get('selected_tool', 'N/A')})")
+
+            print("\nTask Tree Visualization:")
+            print_task_tree(full_task)
+            with open("out.txt", 'w') as file:
+                json.dump(full_task, file, indent=4)
+
+            evaluation = evaluate_task_decomposition(full_task)
+            print("\nTask Decomposition Evaluation:")
+            print(json.dumps(evaluation, indent=2))
+        else:
+            print("Task generation or validation failed.")
+
+    print(f"\nTotal tasks generated: {task_manager.get_task_count()}")
+
+    # print("STARTING EXECUTION OF TASKS:..........................")
+    # futures = await traverse_task_tree(full_task)
+    
+    # async def wait_for_futures(futures_dict):
+    #     """Recursively wait for all futures in the tree"""
+    #     try:
+    #         # Wait for current task
+    #         await futures_dict['task_future']
+            
+    #         # Wait for all subtasks
+    #         for subtask_future in futures_dict['subtask_futures']:
+    #             await wait_for_futures(await subtask_future)
+    #     except Exception as e:
+    #         print(f"Error in task execution: {str(e)}")
+    
+    # # Start monitoring task completion in the background
+    # monitor_task = asyncio.create_task(wait_for_futures(futures))
+    
+    # # Your code can continue here without waiting for tasks to complete
+    # # The Link events will handle dependencies between tasks
+    
+    # # If you need to wait for everything at the very end:
+    # await monitor_task
+
+async def traverse_task_tree(task: Dict):
+    """Start execution of all tasks in the tree immediately.
+    Tasks will handle their own dependencies through Link events."""
+    
+    # Start current task execution without awaiting
+    task_future = asyncio.create_task(execute_task(task))
+    
+    # Start all subtasks immediately
+    subtask_futures = [
+        asyncio.create_task(traverse_task_tree(subtask))
+        for subtask in task.get('subtasks', [])
+    ]
+    
+    # Return all futures without waiting
+    return {
+        'task_future': task_future,
+        'subtask_futures': subtask_futures
+    }
+
+def validate_task(task: Dict, schema: Dict): #Keeping this function here since it is tiny
+    try:
+        validate(instance=task, schema=schema)
+        return True
+    except ValidationError as e:
+        print(f"Task validation error: {e}")
+        return False
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+# File: new_main.py
+
+# main.py
+import asyncio
+import os
+from schemas import Task
+from config import LANGCHAIN_TRACING_V2, chat_model
+from task_manager import TaskManager
+from orchestration import a_generate_task_tree
+from tree_utils import print_task_tree
+from evaluation import evaluate_task_decomposition
+from langchain_core.tracers.context import tracing_v2_enabled
+import json
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Global variables to store the latest task tree
+root_task = None
+tasks_by_depth = None
+
+@socketio.on('generate_tree')
+def handle_generate_tree(message):
+    global root_task, tasks_by_depth
+    prompt = message['prompt']
+    print(f"Received prompt: {prompt}")
+    
+    async def generate():
+        global root_task, tasks_by_depth
+        task_manager = TaskManager()
+        root_task, tasks_by_depth = await a_generate_task_tree(prompt, Task.model_json_schema(), task_manager)
+        return root_task
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    root_task = loop.run_until_complete(generate())
+    
+    if root_task:
+        emit('new_task_tree', root_task.dict())
+    else:
+        emit('generation_failed')
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True, port=5000)
+
+
+# File: orchestration.py
+
+from typing import Dict, List
+from config import MAX_TASKS, MAX_DEPTH
+from task_manager import TaskManager
+from llm_interaction import a_transform_prompt, a_decompose_subtasks, a_select_tool
+from task_execution import execute_task
+
+async def a_generate_task_tree(prompt: str, schema: Dict, task_manager: TaskManager, max_depth: int = MAX_DEPTH):
+    # print(f"{prompt=}, {schema=}")
+    # print(f"{schema['$defs']['Task'].keys()=}")
+    # TODO: clean up
+    task = await a_transform_prompt(prompt, schema, "")
+    task["ingests"] = []
+    if not task:
+        raise Exception("Failed to generate task from user prompt")
+    task_queue = [(task, 0, None, "")]
+    root_task = None
+    tasks_by_depth = {}
+
+    while task_queue:
+        current_task, current_depth, parent_task, parent_context = task_queue.pop(0)
+
+        if task_manager.get_task_count() >= task_manager.max_tasks:
+            break
+
+        selected_tool = await a_select_tool(current_task, schema, current_depth, max_depth)
+        if not selected_tool:
+            continue
+
+        current_task['selected_tool'] = selected_tool
+        current_task['depth'] = current_depth
+
+        if not task_manager.add_task(current_task):
+            break
+
+        if root_task is None:
+            root_task = current_task
+
+        if parent_task:
+            if 'subtasks' not in parent_task:
+                parent_task['subtasks'] = []
+            parent_task['subtasks'].append(current_task)
+
+        if current_depth not in tasks_by_depth:
+            tasks_by_depth[current_depth] = []
+        tasks_by_depth[current_depth].append(current_task)
+        print(current_task)
+        if selected_tool == 'D':  # Only decompose if "Mix of Tools" is selected
+            subtasks = await a_decompose_subtasks(current_task, schema, parent_context)
+            if subtasks:
+                new_parent_context = f"{parent_context}\nParent task: {current_task['task_description']}"
+                for subtask in subtasks:
+                    task_queue.append((subtask, current_depth + 1, current_task, new_parent_context))
+        else:
+            current_task['result'] = await execute_task(current_task)
+
+    return root_task, tasks_by_depth
+
+# File: task_execution.py
+
+#task_execution.py
+import subprocess
+from typing import Dict, Any
+from config import chat_model
+from schemas import Task, Link
+import json
+from llm_interaction import a_generate_code, a_generate_llm_prompt #Add code to generate a code
+
+async def execute_task(task: Dict) -> Any: #Changed execution format to pass in inputs
+    """Executes a task based on its selected tool, handling inputs and outputs."""
+    print(f"Executing task: {task['task_description']=}")
+    selected_tool = task['selected_tool']
+    task_description = task['task_description']
+    inputs = {}
+    for link in task["ingests"]:
+        await link.wait_until_ready()
+        inputs[link.link_name] = link.value
+    try:
+        if selected_tool == 'A':
+            # Execute deterministic code
+            print(f"inputs={inputs}")
+            code = await a_generate_code(task_description, input_schema = {link["link_name"]: link["data_type"] for link in task["ingests"]}, output_schema = {link["link_name"]: link["data_type"] for link in task["produces"]})
+            if not code:
+                return f"Code generation failed for {task_description}" #Check if code was successful
+            try:
+                # Prepare code execution environment with inputs
+                if inputs: #Check if safe and secure
+                    input_str = json.dumps(inputs)
+                    command = f'python -c "import json; inputs = json.loads(\'{input_str}\'); {code}; print(json.dumps(final_code_output_json))"'
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10).stdout #Added sandboxing
+                else:
+                    command = f'python -c "{code}; print(json.dumps(final_code_output_json))"'
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10).stdout #Added sandboxing
+                for link in task["produces"]:
+                    link.set_value(json.loads(result)[link.link_name])
+                return result #If code was successful, return
+            except Exception as e:
+                return f"Code execution error: {e}"
+        elif selected_tool == 'B':
+            #Use LLM search/reasoning
+            prompt = await a_generate_llm_prompt(task_description, inputs, output_schema = {link["link_name"]: link["data_type"] for link in task["produces"]})
+            messages = [HumanMessage(content=prompt)]
+            response =  chat_model.ainvoke(messages)
+            for link in task["produces"]:
+                link.set_value(json.loads(response.content)[link.link_name])
+            return response.content
+        elif selected_tool == 'C':
+            # Use computer use agent (Scrapybara, Selenium, etc.)
+            # ... [Your Scrapybara/Selenium integration code here] ...
+            return "Scrapybara result" #Modify with web interaction
+        else:
+            return "Invalid tool selection"
+    except Exception as e:
+        return f"General exectution error: {e}"
+
+
+
+# File: task_manager.py
+
+# task_manager.py
+from config import MAX_TASKS
+
+class TaskManager:
+    def __init__(self, max_tasks=MAX_TASKS):
+        self.tasks = []
+        self.max_tasks = max_tasks
+
+    def add_task(self, task):
+        if len(self.tasks) < self.max_tasks:
+            self.tasks.append(task)
+            return True
+        return False
+
+    def get_task_count(self):
+        return len(self.tasks)
+
+
+# File: tree_utils.py
+
+def print_task_tree(task, indent=""):
+    selected_tool = task.get('selected_tool', 'N/A')
+    print(f"{indent}Task: {task['task_name']} (Tool: {selected_tool})")
+    if 'subtasks' in task and task['subtasks']:
+        for subtask in task['subtasks']:
+            print_task_tree(subtask, indent + " ")
+    elif 'result' in task:
+        print(f"{indent} Result: {task['result']}")
+
+# File: client\tailwind.config.js
+
+ /** @type {import('tailwindcss').Config} */
+ export default {
+  content: ["./src/**/*.{html,js}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+# File: client\src\App.js
+
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import io from 'socket.io-client';
+import {
+  ReactFlow,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  Controls,
+  Background,
+  Handle,
+  Position,
+  Connection,
+} from '@xyflow/react';
+import { AiFillPlusCircle } from 'react-icons/ai';
+import { IoSend } from "react-icons/io5";
+import '@xyflow/react/dist/style.css';
+import './App.css';
+import Header from './components/Header';
+import CustomEdge from './components/CustomEdge';
+import BranchedEdge from './components/BranchedEdge';
+import SubtaskNode from './components/SubtaskNode';
+import RightSidebar from './components/RightSidebar';
+import dummyTasks from './dummydata.json';
+
+console.log('Loaded dummy tasks:', dummyTasks);
+
+let id = 0;
+const getId = () => `node_${id++}`;
+
+// Custom Node Component with multiple handles
+const CustomNode = ({ data, isSelected }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Determine border color based on hover and selection state
+  const getBorderColor = () => {
+    if (isSelected) return 'border-blue-700';
+    if (isHovered) {
+      return data.completed ? 'border-green-500' : 'border-blue-500';
+    }
+    return 'border-gray-200'; // Neutral border when not hovered
+  };
+
+  // Generate handles based on ingests and produces
+  const renderIngestHandles = () => {
+    const ingests = data.ingests || [];
+    return ingests.map((ingest, index) => {
+      const offset = ((index + 1) * 150) + 200; // Start from 200px down and space by 150px
+      return (
+        <Handle
+          key={`ingest-${index}`}
+          type="target"
+          position={Position.Left}
+          id={`ingest-${index}`}
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ left: -10, top: `${offset}px` }}
+          isConnectable={true}
+        />
+      );
+    });
+  };
+
+  const renderProducesHandles = () => {
+    const produces = data.produces || [];
+    return produces.map((output, index) => {
+      const offset = ((index + 1) * 150) + 200; // Start from 200px down and space by 150px
+      return (
+        <Handle
+          key={`output-${index}`}
+          type="source"
+          position={Position.Right}
+          id={`output-${index}`}
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ right: -10, top: `${offset}px` }}
+          isConnectable={true}
+        />
+      );
+    });
+  };
+
+  return (
+    <div
+      className={`relative bg-white rounded-lg shadow-md p-4 border-2 w-[800px] h-[800px] flex flex-col transition-all duration-200 ${getBorderColor()} hover:shadow-lg ${isHovered ? 'scale-[1.02]' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}>
+      {/* Task name at the top */}
+      <div className='text-6xl font-bold mb-4 text-center leading-tight'>{data.task_name}</div>
+
+      {/* Divider line */}
+      <div className='border-b-2 border-gray-200 mb-3'></div>
+
+      {/* Task description in the middle */}
+      <div className='flex-1 text-5xl text-gray-600 overflow-auto p-8 leading-relaxed'>
+        {data.task_description}
+      </div>
+
+      {/* Dynamic handles based on ingests and produces */}
+      {renderIngestHandles()}
+      {renderProducesHandles()}
+
+      {/* Top handle for hierarchy */}
+      {data.isChild && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="top"
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ top: -10, left: '50%' }}
+          isConnectable={true}
+        />
+      )}
+
+      {/* Bottom handle for hierarchy */}
+      {data.hasChildren && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ bottom: -10, left: '50%' }}
+          isConnectable={true}
+        />
+      )}
+
+      {/* Bottom handle - for all nodes */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+        style={{ bottom: -10, left: '50%' }}
+        isConnectable={true}
+      />
+
+      {/* Left handle - for child nodes */}
+      {data.isChild && (
+        <Handle
+          type="source"
+          position={Position.Left}
+          id="left"
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ left: -10, top: '50%' }}
+          isConnectable={true}
+        />
+      )}
+
+      {/* Right handle - for child nodes */}
+      {data.isChild && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          className="w-6 h-6 bg-blue-500 rounded-full border-3 border-white"
+          style={{ right: -10, top: '50%' }}
+          isConnectable={true}
+        />
+      )}
+    </div>
+  );
+};
+
+const nodeTypes = {
+  customNode: CustomNode,
+};
+
+const edgeTypes = {
+  custom: CustomEdge,      // Curved edges for parent-to-parent and subtask-to-subtask
+  branched: BranchedEdge,  // Straight dotted edges for parent-to-child
+};
+
+console.log('Available edge types:', edgeTypes);
+
+console.log('Available edge types:', Object.keys(edgeTypes));
+
+function App() {
+  // Add CSS to ensure the app takes full viewport height
+  
+  React.useEffect(() => {
+    document.body.style.margin = '0';
+    document.body.style.height = '100vh';
+    document.documentElement.style.height = '100vh';
+  }, []);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [prompt, setPrompt] = useState('');
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const reactFlowInstance = useRef(null);
+
+  // Function to create nodes and edges based on task data
+  const createNodesAndEdges = (taskData) => {
+    console.log('Creating nodes and edges from data:', taskData);
+    const newNodes = [];
+    const newEdges = [];
+
+    // --------------------------------------------------------------------------------
+    // Directly add the edge between Subtask B (1_2) and Subtask C (2_1)
+    const hardcodedEdge = {
+      id: 'edge-1_2-2_1',
+      source: 'node_1_2',  // Subtask B
+      target: 'node_2_1',  // Subtask C
+      type: 'custom',
+      sourceHandle: 'right',
+      targetHandle: 'left',
+      animated: false,
+      style: {
+        stroke: '#2563eb',
+        strokeWidth: 2,
+        zIndex: 1
+      },
+      markerEnd: {
+        type: 'arrowclosed',
+        width: 20,
+        height: 20,
+        color: '#2563eb',
+      },
+    };
+    newEdges.push(hardcodedEdge);
+    // --------------------------------------------------------------------------------
+
+    // Function to create an edge between nodes
+    const createDependencyEdge = (sourceId, targetId, nodes) => {
+      // Find source and target nodes to determine their types
+      const sourceNode = nodes.find(n => n.id === `node_${sourceId}`);
+      const targetNode = nodes.find(n => n.id === `node_${targetId}`);
+      const isSourceChild = sourceNode?.data?.isChild;
+      const targetChild = targetNode?.data?.isChild;
+
+      // Parent-to-child connection should be dotted
+      const isParentToChild = !isSourceChild && targetChild;
+
+      console.log('Creating edge:', sourceId, '->', targetId, 'isParentToChild:', isParentToChild);
+
+      return {
+        id: `edge-${sourceId}-${targetId}`,
+        source: `node_${sourceId}`,
+        target: `node_${targetId}`,
+        type: 'custom',
+        sourceHandle: 'right',
+        targetHandle: 'left',
+        animated: false,
+        style: {
+          stroke: '#2563eb',
+          strokeWidth: 2,
+          strokeDasharray: isParentToChild ? '4' : undefined,
+          zIndex: 1
+        },
+        markerEnd: {
+          type: 'arrowclosed',
+          width: 20,
+          height: 20,
+          color: '#2563eb',
+        },
+      };
+    };
+
+    // Add edges for all dependencies (both tasks and subtasks)
+    taskData.forEach(task => {
+      // Handle task dependencies
+      if (task.dependencies) {
+        task.dependencies.forEach(depId => {
+          newEdges.push(createDependencyEdge(depId, task.task_id, newNodes));
+        });
+      }
+
+      // Handle subtask dependencies
+      if (task.subtasks) {
+        task.subtasks.forEach(subtask => {
+          if (subtask.dependencies) {
+            subtask.dependencies.forEach(depId => {
+              newEdges.push(createDependencyEdge(depId, subtask.task_id, newNodes));
+            });
+          }
+        });
+      }
+    });
+
+    // Calculate node levels based on dependencies
+    const nodeLevels = {};
+
+    // Initialize nodes with no dependencies at level 0
+    taskData.forEach(task => {
+      if (!task.dependencies || task.dependencies.length === 0) {
+        nodeLevels[task.task_id] = 0;
+      }
+    });
+
+    // Calculate levels for nodes with dependencies
+    let changed = true;
+    while (changed) {
+      changed = false;
+      taskData.forEach(task => {
+        if (task.dependencies && task.dependencies.length > 0) {
+          const maxDependencyLevel = Math.max(...task.dependencies.map(depId => nodeLevels[depId] || 0));
+          const newLevel = maxDependencyLevel + 1;
+          if (nodeLevels[task.task_id] !== newLevel) {
+            nodeLevels[task.task_id] = newLevel;
+            changed = true;
+          }
+        }
+      });
+    }
+
+    // Layout configuration
+    const horizontalGap = 300;     // Space between nodes at same level
+    const verticalSpacing = 1500;  // Extra large space between depth levels
+    const gridStartX = 100;       // Starting X position
+    const gridStartY = 150;       // Starting Y position
+    const nodeWidth = 800;        // Width of each node
+
+
+    // First collect all tasks by depth level
+    const tasksByDepth = new Map();
+    
+    const collectTasksByDepth = (task, depth = 0) => {
+      if (!tasksByDepth.has(depth)) {
+        tasksByDepth.set(depth, []);
+      }
+      tasksByDepth.get(depth).push(task);
+      
+      if (task.subtasks && task.subtasks.length > 0) {
+        task.subtasks.forEach(subtask => collectTasksByDepth(subtask, depth + 1));
+      }
+    };
+    
+    // Collect all tasks
+    taskData.forEach(task => collectTasksByDepth(task));
+    
+    // Calculate positions and create nodes
+    const depthLevels = Array.from(tasksByDepth.keys());
+    const maxDepth = Math.max(...depthLevels);
+    
+    // Process nodes by depth
+    
+    // Create nodes level by level
+    depthLevels.forEach(depth => {
+      const tasks = tasksByDepth.get(depth);
+      const tasksCount = tasks.length;
+      
+      // Calculate total width needed for this level
+      const totalWidth = (tasksCount - 1) * (nodeWidth + horizontalGap);
+      
+      // Calculate viewport width (use a minimum width to prevent overcrowding)
+      const viewportWidth = Math.max(window.innerWidth, totalWidth + nodeWidth + (2 * gridStartX));
+      
+      // Center the nodes horizontally in the viewport
+      const levelStartX = (viewportWidth - totalWidth - nodeWidth) / 2;
+      
+      // Create nodes for this depth level
+      tasks.forEach((task, index) => {
+        // Position node with exact spacing to ensure alignment
+        const x = levelStartX + (index * (nodeWidth + horizontalGap));
+        const y = gridStartY + (depth * verticalSpacing);
+        
+        // Create node with precise positioning
+        const taskNode = {
+          id: `node_${task.task_id}`,
+          type: 'customNode',
+          position: { x, y },
+          draggable: true,
+          data: {
+            id: task.task_id,
+            task_name: task.task_name,
+            task_description: task.task_description,
+            completed: task.completed || false,
+            isChild: depth > 0,
+            hasChildren: task.subtasks && task.subtasks.length > 0,
+            dependencies: task.dependencies || []
+          }
+        };
+        newNodes.push(taskNode);
+        
+        // Create edges to children
+        if (task.subtasks) {
+          task.subtasks.forEach(subtask => {
+            newEdges.push({
+              id: `edge-${task.task_id}-${subtask.task_id}`,
+              source: `node_${task.task_id}`,
+              target: `node_${subtask.task_id}`,
+              type: 'branched',
+              sourceHandle: 'bottom',
+              targetHandle: 'top',
+              style: {
+                strokeDasharray: '4',
+                stroke: '#2563eb',
+                strokeWidth: 2,
+              }
+            });
+          });
+        }
+        
+        // Create dependency edges (only for same level or adjacent levels)
+        if (task.dependencies) {
+          task.dependencies.forEach(depId => {
+            newEdges.push({
+              id: `edge-${depId}-${task.task_id}`,
+              source: `node_${depId}`,
+              target: `node_${task.task_id}`,
+              type: 'custom',
+              sourceHandle: 'right',
+              targetHandle: 'left',
+              style: {
+                stroke: '#2563eb',
+                strokeWidth: 2,
+                zIndex: 1
+              },
+              markerEnd: {
+                type: 'arrowclosed',
+                width: 20,
+                height: 20,
+                color: '#2563eb',
+              }
+            });
+          });
+        }
+      });
+    });
+
+
+    // Create nodes for each depth level
+    taskData.forEach((task, index) => {
+      // Add main task node
+      newNodes.push({
+        id: `node_${task.task_id}`,
+        type: 'customNode',
+        position: {
+          x: gridStartX + (index * (nodeWidth + horizontalGap)),
+          y: gridStartY
+        },
+        data: {
+          id: task.task_id,
+          task_name: task.task_name,
+          task_description: task.task_description,
+          completed: task.completed,
+          hasChildren: task.subtasks && task.subtasks.length > 0,
+          ingests: task.ingests || [],
+          produces: task.produces || []
+        }
+      });
+
+      // Add subtask nodes
+      if (task.subtasks && task.subtasks.length > 0) {
+        const parentX = gridStartX + (index * (nodeWidth + horizontalGap));
+        const totalWidth = (task.subtasks.length - 1) * (nodeWidth + horizontalGap);
+        const childStartX = parentX - (totalWidth / 2);
+
+        task.subtasks.forEach((subtask, childIndex) => {
+          newNodes.push({
+            id: `node_${subtask.task_id}`,
+            type: 'customNode',
+            position: {
+              x: childStartX + (childIndex * (nodeWidth + horizontalGap)),
+              y: gridStartY + verticalSpacing
+            },
+            data: {
+              id: subtask.task_id,
+              task_name: subtask.task_name,
+              task_description: subtask.task_description,
+              completed: subtask.completed || false,
+              isChild: true,
+              dependencies: subtask.dependencies || [],
+              ingests: subtask.ingests || [],
+              produces: subtask.produces || []
+            }
+          });
+
+          // Add parent-child connection
+          newEdges.push({
+            id: `edge-${task.task_id}-${subtask.task_id}`,
+            source: `node_${task.task_id}`,
+            target: `node_${subtask.task_id}`,
+            type: 'branched',
+            sourceHandle: 'bottom',
+            targetHandle: 'top',
+            style: {
+              strokeDasharray: '4',
+              stroke: '#2563eb',
+              strokeWidth: 2,
+            }
+          });
+        });
+      }
+    });
+
+    // Create edges for all ingests/produces relationships
+    taskData.forEach((sourceTask, sourceIndex) => {
+      // Skip if task has no produces
+      if (!sourceTask.produces || sourceTask.produces.length === 0) return;
+      
+      // For each link this task produces
+      sourceTask.produces.forEach((producedLink, produceIndex) => {
+        // Find all tasks that ingest this link
+        taskData.forEach((targetTask, targetIndex) => {
+          if (sourceIndex === targetIndex) return; // Skip self
+          
+          // Find if target task ingests this link
+          const ingestIndex = targetTask.ingests?.findIndex(ingest => 
+            ingest.link_id === producedLink.link_id
+          );
+          
+          if (ingestIndex !== -1) {
+            // Create edge from producer to ingester
+            newEdges.push({
+              id: `link-${producedLink.link_id}-${sourceTask.task_id}-${targetTask.task_id}`,
+              source: `node_${sourceTask.task_id}`,
+              target: `node_${targetTask.task_id}`,
+              type: 'custom',
+              sourceHandle: `output-${produceIndex}`,
+              targetHandle: `ingest-${ingestIndex}`,
+              style: { stroke: '#ff0000', strokeWidth: 2 },  // Red color like in diagram
+              animated: true,
+              data: { text: producedLink.link_name }  // Show link name on edge
+            });
+          }
+        });
+      });
+    });
+
+    // Handle dependencies
+    // allTasks.forEach(task => {
+    //   if (task.dependencies) {
+    //     task.dependencies.forEach(depId => {
+    //       newEdges.push(createDependencyEdge(depId, task.task_id, newNodes));
+    //     });
+    //   }
+    // });
+
+    console.log('Final nodes:', newNodes);
+    console.log('Final edges:', newEdges);
+
+    setNodes(newNodes);
+    setEdges(newEdges);
+
+    // Set specific zoom and view after creating nodes
+    // Wait for nodes to be rendered
+    setTimeout(() => {
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.fitView({ 
+          padding: 0.1,
+          duration: 600 // Smooth, comfortable transition
+        });
+      }
+    }, 100);
+  };
+
+  const [socket, setSocket] = useState(null);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    newSocket.on('new_task_tree', (data) => {
+      console.log('Received new task tree:', data);
+      createNodesAndEdges(data);
+    });
+
+    return () => newSocket.close();
+  }, []);
+
+  const handleSendClick = useCallback(() => {
+    if (prompt.trim() && socket) {
+      socket.emit('generate_tree', { prompt: prompt });
+    }
+  }, [prompt, socket]);
+
+  // // Function to handle send button click
+  // const handleSendClick = () => {
+  //   if (prompt.trim()) {
+  //     console.log('Handling send click with dummy tasks:', dummyTasks.subtasks);
+  //     createNodesAndEdges(dummyTasks.subtasks);
+  //     // Keeping prompt in the text bar
+  //   }
+  // };
+
+  const onNodeClick = useCallback((event, node) => {
+    setSelectedNode(node);
+    setIsSidebarOpen(true);
+  }, []);
+
+  const handleSidebarClose = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  const handleSaveChanges = useCallback(() => {
+    // TODO: Implement save logic
+    console.log('Saving changes for node:', selectedNode?.id);
+    setIsSidebarOpen(false);
+  }, [selectedNode]);
+
+  // Enhanced connection handling with validation
+  const onConnect = useCallback((params) => {
+    // Validate connection - prevent self loops and duplicate connections
+    if (params.source !== params.target) {
+      setEdges((eds) => {
+        // Check if connection already exists
+        const connectionExists = eds.some(
+          (edge) =>
+            edge.source === params.source && edge.target === params.target
+        );
+        if (!connectionExists) {
+          return addEdge(params, eds);
+        }
+        return eds;
+      });
+    }
+  }, [setEdges]);
+
+  const handleAddNode = useCallback(() => {
+    const newNode = {
+      id: getId(),
+      type: 'customNode',
+      data: { label: prompt },
+      position: {
+        x: Math.random() * 500,
+        y: Math.random() * 300,
+      },
+      // Add input and output handles
+      sourcePosition: 'right',
+      targetPosition: 'left',
+      style: {
+        background: 'transparent', // Remove default background
+        border: 'none', // Remove default border
+        padding: 0, // Remove default padding
+        width: 'auto', // Adjust width based on content
+      },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+    setPrompt('');
+  }, [setNodes, prompt]);
+
+  // const handleAddNodeWithPrompt = useCallback(() => {
+  //   if (prompt.trim() === '') {
+  //     alert('Please enter a prompt before adding a node.');
+  //     return;
+  //   }
+  //   createNodesAndEdges(dummyTasks);
+  //   setPrompt('');
+  // }, [setNodes, prompt, selectedNode, setEdges]);
+
+
+  const handleAddNodeNoPrompt = useCallback(() => {
+    const newNode = {
+      id: getId(),
+      type: 'customNode', // Specify the custom node type
+      data: { label: "New Node" },
+      position: {
+        x: Math.random() * 500,
+        y: Math.random() * 300,
+      },
+      style: {
+        background: 'transparent', // Remove default background
+        border: 'none', // Remove default border
+        padding: 0, // Remove default padding
+        width: 'auto', // Adjust width based on content
+      },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+  }, [setNodes]);
+
+
+  // Node types are already registered globally
+
+  return (
+    <div className='flex flex-col h-screen'>
+      <div className='flex-shrink-0'>
+        <Header />
+      </div>
+
+      <div className='flex flex-col items-center py-4 flex-shrink-0 bg-white border-b border-gray-200'>
+        <div className='flex transition-transform hover:scale-105 justify-center'>
+          <input
+            className='px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-400 w-[1200px]' // Increased width
+            type='text'
+            placeholder='Enter prompt...'
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+          <button
+            className='bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400'
+            onClick={handleSendClick}
+          >
+            <IoSend />
+          </button>
+        </div>
+
+        <div className='self-start pl-4'>
+          <button className='focus:outline-none transition-transform hover:scale-110' onClick={handleAddNodeNoPrompt}>
+            <AiFillPlusCircle size={40} className='text-green-500 hover:text-green-700' />
+          </button>
+        </div>
+      </div>
+
+      <div className='flow-container flex-grow' style={{ minHeight: 0 }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onInit={(instance) => {
+            reactFlowInstance.current = instance;
+            // Start with a view that shows the top area
+            // Initial view
+            instance.fitView({ duration: 600 });
+          }}
+          fitView
+          fitViewOptions={{ padding: 0.1, includeHiddenNodes: true, duration: 600 }}
+          minZoom={0.05}
+          maxZoom={1.5}
+          defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+          className='bg-gray-100'
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeClick={onNodeClick}
+          defaultEdgeOptions={{
+            animated: false,
+            style: {
+              stroke: '#2563eb',
+              strokeWidth: 2,
+              zIndex: 1
+            },
+            markerEnd: {
+              type: 'arrowclosed',
+              color: '#2563eb',
+              width: 20,
+              height: 20
+            }
+          }}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background color='#aaa' variant='dots' />
+          <Controls
+            position="bottom-left"
+            style={{
+              marginLeft: '16px',
+              marginBottom: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              background: 'white',
+              padding: '8px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              transform: 'scale(1.1)',
+              zIndex: 5,
+              '& button': {
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }
+            }}
+            showZoom={true}
+            showFitView={true}
+            showInteractive={true}
+            fitViewOptions={{ padding: 1 }}
+          />
+        </ReactFlow>
+        <RightSidebar
+          isOpen={isSidebarOpen}
+          onClose={handleSidebarClose}
+          selectedNode={selectedNode}
+          onSave={handleSaveChanges}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+# File: client\src\App.test.js
+
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+
+
+# File: client\src\index.js
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+
+# File: client\src\reportWebVitals.js
+
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+
+
+# File: client\src\setupTests.js
+
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+
+
+# File: client\src\store.js
+
+// store.js
+import create from 'zustand';
+
+const useStore = create((set) => ({
+    nodes: [],
+    edges: [],
+    setNodes: (nodes) => set({ nodes }),
+    setEdges: (edges) => set({ edges }),
+}));
+
+export default useStore;
+
+
+# File: client\src\components\BranchedEdge.js
+
+import React from 'react';
+import { BaseEdge } from '@xyflow/react';
+
+function BranchedEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }) {
+  // Calculate branching point (45% down from source)
+  const branchY = sourceY + (targetY - sourceY) * 0.45;
+  
+  // Calculate control points for smooth curve
+  const controlY = branchY + (targetY - branchY) * 0.5;
+  
+  // Create a path with smooth curves
+  const path = `
+    M ${sourceX},${sourceY} 
+    L ${sourceX},${branchY} 
+    C ${sourceX},${controlY} ${targetX},${controlY} ${targetX},${targetY}
+  `;
+
+  return (
+    <BaseEdge
+      path={path}
+      style={{
+        strokeWidth: 4,
+        stroke: '#2563eb',
+        strokeDasharray: '10 20',
+      }}
+    />
+  );
+}
+
+export default BranchedEdge;
+
+
+# File: client\src\components\CustomEdge.js
+
+import React from 'react';
+import { BaseEdge } from '@xyflow/react';
+
+const getCustomPath = ({ sourceX, sourceY, targetX, targetY, data }) => {
+  const distance = Math.abs(targetX - sourceX);
+  const sourceId = data?.sourceId || '';
+  const targetId = data?.targetId || '';
+  
+  // Calculate node indices from IDs (assuming format 'node_1', 'node_2', etc.)
+  const sourceIndex = parseInt(sourceId.split('_')[1]);
+  const targetIndex = parseInt(targetId.split('_')[1]);
+  const nodeDistance = Math.abs(targetIndex - sourceIndex);
+  
+  // Increase curve height for nodes that are further apart
+  const baseHeight = distance * 1.8; // Doubled base height
+  const heightMultiplier = nodeDistance > 1 ? 4.5 : 1.2; // Much higher for longer edges, shorter for adjacent
+  const curveHeight = -Math.min(baseHeight * heightMultiplier, 800); // Increased max height for longer curves
+  
+  // Adjust control points based on node distance
+  const spreadMultiplier = nodeDistance > 1 ? 0.6 : 0.4; // Increased spread significantly
+  const controlPoint1X = sourceX + distance * spreadMultiplier;
+  const controlPoint2X = targetX - distance * spreadMultiplier;
+  const controlPointY = sourceY + curveHeight;
+  
+  // Create a cubic bezier curve with dynamic curvature
+  return `M ${sourceX} ${sourceY} C ${controlPoint1X} ${controlPointY}, ${controlPoint2X} ${controlPointY}, ${targetX} ${targetY}`;
+};
+
+export default function CustomEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  markerEnd,
+  style = {},
+  data
+}) {
+  const path = getCustomPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    data
+  });
+
+  return (
+    <BaseEdge 
+      path={path} 
+      markerEnd={markerEnd}
+      className="react-flow__edge-path"
+      style={{
+        ...style,
+        strokeWidth: 3,
+        stroke: '#2563eb',
+        fill: 'none',
+        strokeDasharray: 'none',
+        filter: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.1))', // Add subtle shadow for depth
+      }}
+    />
+  );
+}
+
+
+# File: client\src\components\Header.js
+
+import React from 'react';
+
+function Header() {
+  return (
+    <div className='border-b p-6 text-4xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'>
+      🛠️ Bob: the Agent Builder 🚀
+    </div>
+  );
+}
+
+export default Header;
+
+
+# File: client\src\components\RightSidebar.js
+
+import React from 'react';
+
+const RightSidebar = ({ isOpen, onClose, selectedNode, onSave }) => {
+  return (
+    <div 
+      className={`fixed top-[150px] right-0 h-[calc(100vh-150px)] w-96 bg-gray-50/20 backdrop-blur-sm transform transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* Content container */}
+      <div className="p-6 h-full flex flex-col space-y-2 overflow-y-auto">
+        {/* Current Description */}
+        <div className="flex-1">
+          <h3 className="text-2xl font-semibold mb-1 text-gray-700">Current Description</h3>
+          <textarea
+            className="w-full h-48 p-4 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+            defaultValue={selectedNode?.data?.task_description || ''}
+            placeholder="No description available"
+          />
+        </div>
+
+        {/* New Prompt */}
+        <div className="flex-1">
+          <h3 className="text-2xl font-semibold mb-1 text-gray-700">New Prompt</h3>
+          <textarea
+            className="w-full h-48 p-4 bg-white/10 backdrop-blur-sm border border-gray-300/30 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+            placeholder="Enter new prompt..."
+          />
+        </div>
+
+        {/* Save Button */}
+        <button
+          onClick={onSave}
+          className="w-full bg-blue-600/80 backdrop-blur-sm text-white py-3 rounded-lg hover:bg-blue-700/90 transition-all duration-200 mb-6"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default RightSidebar;
+
+
+# File: client\src\components\SubtaskNode.js
+
+import React, { useState } from 'react';
+import { Handle, Position } from '@xyflow/react';
+
+const SubtaskNode = ({ data, isSelected }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const getBorderColor = () => {
+    if (isSelected) return 'border-blue-700';
+    if (isHovered) {
+      return data.completed ? 'border-green-500' : 'border-blue-500';
+    }
+    return 'border-gray-200';
+  };
+  
+  return (
+    <div 
+      className={`relative bg-white rounded-lg shadow-md p-4 border-2 w-[400px] h-[250px] flex flex-col transition-all duration-200 ${getBorderColor()} hover:shadow-lg ${isHovered ? 'scale-[1.02]' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Task name at the top */}
+      <div className='text-3xl font-bold mb-2 text-center'>{data.task_name}</div>
+      
+      {/* Divider line */}
+      <div className='border-b-2 border-gray-200 mb-3'></div>
+      
+      {/* Task description in the middle */}
+      <div className='flex-1 text-lg text-gray-600 overflow-auto p-2'>
+        {data.task_description}
+      </div>
+
+      {/* Top handle */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="top"
+        className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white"
+        style={{ top: -6, left: '50%' }}
+        isConnectable={true}
+      />
+
+      {/* Left handle */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="left"
+        className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white"
+        style={{ left: -6, top: '50%' }}
+        isConnectable={true}
+      />
+
+      {/* Right handle */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white"
+        style={{ right: -6, top: '50%' }}
+        isConnectable={true}
+      />
+
+      {/* Bottom handle */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white"
+        style={{ bottom: -6, left: '50%' }}
+        isConnectable={true}
+      />
+    </div>
+  );
+};
+
+export default SubtaskNode;
+
+
+# File: schemas\Link.py
+
+from enum import Enum
+from pydantic import BaseModel, Field, PrivateAttr
+from typing import Any, Optional
+import asyncio
+
+class DataSourceEnum(Enum):
+    # FILE = "file"
+    # DATABASE = "database"
+    # API = "api"
+    # URL = "url"
+    # CONSOLE = "console"
+    # TASK = "task"
+    TEXT = "text"
+    FILE = "file"
+
+class Link(BaseModel):
+    link_id: str = Field(description="Unique identifier for the link")
+    link_name: str = Field(description="Name of the link")
+    link_description: str = Field(description="Description of the link")
+    data_type: str = Field(description="Data type of the link from the set of Python data types")
+    data_source_type: DataSourceEnum = Field(description="Where the information comes from")
+    value: Optional[Any] = Field(default=None, description="The actual data of the link when available")
+    _ready_event: asyncio.Event = PrivateAttr(default_factory=asyncio.Event)
+
+    async def wait_until_ready(self):
+        await self._ready_event.wait()
+
+    def set_value(self, value: Any):
+        self.value = value
+        self._ready_event.set()
+
+if __name__ == "__main__":
+    # Generate JSON schema
+    link_schema = Link.model_json_schema()
+    print(link_schema)
+
+
+# File: schemas\Task.py
+
+from pydantic import BaseModel, Field
+from typing import List, Optional, Any
+from .Link import Link
+
+class Task(BaseModel):
+    task_id: str = Field(description="Unique identifier for the task")
+    task_name: str = Field(description="Name of the task")
+    task_description: str = Field(description="Description of the task")
+    ingests: List[Link] = Field(default=[], description="List of links this task ingests")
+    produces: List[Link] = Field(default=[], description="List of links this task produces")
+    subtasks: Optional[List['Task']] = Field(default=None, description="List of subtasks")
+    completed: bool = Field(default=False, description="Whether the task is completed")
+    selected_tool: Optional[str] = Field(default=None, description="Tool selected to perform the function.")
+    depth: Optional[int] = Field(default=None, description="Depth of the task in the task tree")
+    result: Optional[Any] = Field(default=None, description="The result of the task")
+
+Task.model_rebuild()
+
+if __name__ == "__main__":
+    # Generate JSON schema
+    task_schema = Task.model_json_schema()
+    print(task_schema)
+
+
+# File: schemas\__init__.py
+
+from .Task import Task
+from .Link import Link
+
