@@ -6,7 +6,7 @@ class Task(BaseModel):
     task_id: str = Field(description="Unique identifier for the task")
     task_name: str = Field(description="Name of the task")
     task_description: str = Field(description="Description of the task")
-    dependencies: List[str] = Field(default=[], description="List of task_ids this task depends on")
+    ingests: List[Link] = Field(default=[], description="List of links this task ingests")
     produces: List[Link] = Field(default=[], description="List of links this task produces")
     subtasks: Optional[List['Task']] = Field(default=None, description="List of subtasks")
     completed: bool = Field(default=False, description="Whether the task is completed")

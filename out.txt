@@ -1,281 +1,172 @@
 {
-    "task_id": "blender_us_presidents_heads",
-    "task_name": "Create Blender models of the heads of the three most recent US presidents",
-    "task_description": "Using Blender, create 3D head models of the three most recent US presidents, ensuring accuracy and detail in the representations.",
-    "subtasks": [
+    "task_id": "book_flight_hawaii_to_sf",
+    "task_name": "Book flights from Hawaii to San Francisco for next week",
+    "task_description": "Search and book flights from Hawaii to San Francisco departing next week",
+    "ingests": [
         {
-            "task_id": "research_recent_presidents",
-            "task_name": "Research Recent US Presidents",
-            "task_description": "Research and list the names of the three most recent US presidents as of the current date (February 15, 2025).",
-            "dependencies": [],
-            "produces": [
-                {
-                    "link_id": "recent_presidents_list",
-                    "link_name": "Recent US Presidents List",
-                    "link_description": "A list containing the names of the three most recent US presidents",
-                    "data_type": "list",
-                    "data_source_type": "task",
-                    "value": null
-                }
-            ],
-            "subtasks": [
-                {
-                    "task_id": "determine_current_president_2025",
-                    "task_name": "Determine Current US President as of February 15, 2025",
-                    "task_description": "Research and identify who is serving as the President of the United States on February 15, 2025.",
-                    "dependencies": [],
-                    "produces": [],
-                    "subtasks": [
-                        {
-                            "task_id": "research_recent_us_election",
-                            "task_name": "Research Most Recent US Presidential Election Date",
-                            "task_description": "Research and identify the date of the most recent US presidential election that occurred prior to February 15, 2025.",
-                            "dependencies": [],
-                            "produces": [],
-                            "subtasks": [
-                                {
-                                    "task_id": "find_reliable_sources_recent_us_election",
-                                    "task_name": "Find Reliable Sources on Recent US Presidential Election",
-                                    "task_description": "Identify and compile reliable sources containing information about the most recent US presidential election cycle that occurred prior to February 15, 2025. Focus on reputable news outlets, government websites, and academic institutions for accurate and comprehensive information.",
-                                    "dependencies": [],
-                                    "produces": [
-                                        {
-                                            "link_id": "reliable_sources_list",
-                                            "link_name": "List of Reliable Sources",
-                                            "link_description": "A curated list of reliable sources with information about the most recent US presidential election cycle prior to February 15, 2025",
-                                            "data_type": "list",
-                                            "data_source_type": "task"
-                                        }
-                                    ],
-                                    "subtasks": [
-                                        {
-                                            "task_id": "compile_official_election_resources",
-                                            "task_name": "Compile Official Government Resources for Recent US Presidential Election",
-                                            "task_description": "Research and compile a list of official government websites and resources that provide reliable information about the most recent US presidential election. Focus on authoritative sources such as federal election commissions, state election boards, and official government archives.",
-                                            "dependencies": [],
-                                            "produces": [
-                                                {
-                                                    "link_id": "official_election_resources_list",
-                                                    "link_name": "List of Official Election Resources",
-                                                    "link_description": "A comprehensive list of official government websites and resources providing reliable information about the most recent US presidential election",
-                                                    "data_type": "list",
-                                                    "data_source_type": "task"
-                                                }
-                                            ],
-                                            "subtasks": [
-                                                {
-                                                    "task_id": "compile_federal_election_resources",
-                                                    "task_name": "Compile Official Federal Election Resources",
-                                                    "task_description": "Research and compile a list of official federal government websites and resources that provide reliable information about the most recent US presidential election, focusing on sources such as the Federal Election Commission, Election Assistance Commission, and other relevant federal agencies.",
-                                                    "subtasks": [
-                                                        {
-                                                            "task_id": "FEC_presidential_election_resources",
-                                                            "task_name": "Compile FEC resources for recent US presidential election",
-                                                            "task_description": "Identify and compile a list of relevant resources from the Federal Election Commission (FEC) website related to the most recent US presidential election, including official reports, data, and guidance documents.",
-                                                            "subtasks": [
-                                                                {
-                                                                    "task_id": "search_fec_certified_results",
-                                                                    "task_name": "Search FEC Website for Certified Presidential Election Results",
-                                                                    "task_description": "Navigate to the Federal Election Commission (FEC) website and locate the official page containing certified results of the most recent presidential election.",
-                                                                    "dependencies": [],
-                                                                    "produces": [
-                                                                        {
-                                                                            "link_id": "fec_certified_results_page",
-                                                                            "link_name": "FEC Certified Presidential Election Results Page",
-                                                                            "link_description": "Official FEC webpage containing certified results of the most recent presidential election",
-                                                                            "data_type": "string",
-                                                                            "data_source_type": "url",
-                                                                            "value": null
-                                                                        }
-                                                                    ],
-                                                                    "subtasks": [
-                                                                        {
-                                                                            "task_id": "open_fec_website",
-                                                                            "task_name": "Open FEC Website",
-                                                                            "task_description": "Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov.",
-                                                                            "dependencies": [],
-                                                                            "produces": [],
-                                                                            "subtasks": [
-                                                                                {
-                                                                                    "task_id": "open_fec_website",
-                                                                                    "task_name": "Open FEC Website",
-                                                                                    "task_description": "Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov.",
-                                                                                    "dependencies": [],
-                                                                                    "produces": [],
-                                                                                    "completed": false,
-                                                                                    "selected_tool": "C",
-                                                                                    "depth": 10,
-                                                                                    "subtasks": [
-                                                                                        {
-                                                                                            "task_id": "open_web_browser",
-                                                                                            "task_name": "Open Web Browser",
-                                                                                            "task_description": "Open a web browser application on the computer",
-                                                                                            "dependencies": [],
-                                                                                            "produces": [],
-                                                                                            "subtasks": [
-                                                                                                {
-                                                                                                    "task_id": "start_default_browser",
-                                                                                                    "task_name": "Start Default Web Browser",
-                                                                                                    "task_description": "Launch the default web browser application on the computer",
-                                                                                                    "dependencies": [],
-                                                                                                    "produces": [],
-                                                                                                    "subtasks": [
-                                                                                                        {
-                                                                                                            "task_id": "identify_default_browser",
-                                                                                                            "task_name": "Identify Default Web Browser",
-                                                                                                            "task_description": "Determine the current default web browser application set on the computer.",
-                                                                                                            "dependencies": [],
-                                                                                                            "produces": [],
-                                                                                                            "completed": false,
-                                                                                                            "selected_tool": "B",
-                                                                                                            "depth": 13,
-                                                                                                            "subtasks": [
-                                                                                                                {
-                                                                                                                    "task_id": "access_system_settings_for_browser_config",
-                                                                                                                    "task_name": "Access System Settings for Default Browser Configuration",
-                                                                                                                    "task_description": "Navigate to the system settings or control panel to view the current default web browser configuration on the computer.",
-                                                                                                                    "dependencies": [],
-                                                                                                                    "produces": [
-                                                                                                                        {
-                                                                                                                            "link_id": "default_browser_info",
-                                                                                                                            "link_name": "Default Browser Information",
-                                                                                                                            "link_description": "Information about the currently set default web browser on the system",
-                                                                                                                            "data_type": "string",
-                                                                                                                            "data_source_type": "task"
-                                                                                                                        }
-                                                                                                                    ],
-                                                                                                                    "subtasks": [
-                                                                                                                        {
-                                                                                                                            "task_id": "launch_system_settings",
-                                                                                                                            "task_name": "Launch System Settings or Control Panel",
-                                                                                                                            "task_description": "Open the system settings or control panel application on the computer. This can typically be done by searching for 'Settings' or 'Control Panel' in the Start menu or using keyboard shortcuts like Windows key + I for Windows Settings.",
-                                                                                                                            "dependencies": [],
-                                                                                                                            "produces": [],
-                                                                                                                            "subtasks": [
-                                                                                                                                {
-                                                                                                                                    "task_id": "open_start_menu_and_search",
-                                                                                                                                    "task_name": "Open Start Menu and Search for Settings or Control Panel",
-                                                                                                                                    "task_description": "Open the Start menu and search for either 'Settings' or 'Control Panel' to access system configuration options.",
-                                                                                                                                    "dependencies": [],
-                                                                                                                                    "produces": [],
-                                                                                                                                    "subtasks": [
-                                                                                                                                        {
-                                                                                                                                            "task_id": "open_start_menu",
-                                                                                                                                            "task_name": "Open the Start menu",
-                                                                                                                                            "task_description": "Open the Start menu using either the Start button or the Windows key",
-                                                                                                                                            "subtasks": [
-                                                                                                                                                {
-                                                                                                                                                    "task_id": "locate_click_start_button",
-                                                                                                                                                    "task_name": "Locate and click the Start button",
-                                                                                                                                                    "task_description": "Find the Start button, typically located in the bottom-left corner of the screen, and click on it to open the Start menu.",
-                                                                                                                                                    "dependencies": [],
-                                                                                                                                                    "produces": [],
-                                                                                                                                                    "subtasks": [
-                                                                                                                                                        {
-                                                                                                                                                            "task_id": "find_start_button",
-                                                                                                                                                            "task_name": "Find the Start button",
-                                                                                                                                                            "task_description": "Locate the Start button on the screen. It is typically found in the bottom-left corner of the screen or centered on the taskbar, depending on your Windows settings.",
-                                                                                                                                                            "completed": false,
-                                                                                                                                                            "selected_tool": "B",
-                                                                                                                                                            "depth": 19
-                                                                                                                                                        }
-                                                                                                                                                    ],
-                                                                                                                                                    "completed": false,
-                                                                                                                                                    "selected_tool": "B",
-                                                                                                                                                    "depth": 18,
-                                                                                                                                                    "result": "Result of executing task: Find the Start button, typically located in the bottom-left corner of the screen, and click on it to open the Start menu."
-                                                                                                                                                }
-                                                                                                                                            ],
-                                                                                                                                            "completed": false,
-                                                                                                                                            "selected_tool": "B",
-                                                                                                                                            "depth": 17,
-                                                                                                                                            "result": "Result of executing task: Open the Start menu using either the Start button or the Windows key"
-                                                                                                                                        }
-                                                                                                                                    ],
-                                                                                                                                    "completed": false,
-                                                                                                                                    "selected_tool": "B",
-                                                                                                                                    "depth": 16,
-                                                                                                                                    "result": "Result of executing task: Open the Start menu and search for either 'Settings' or 'Control Panel' to access system configuration options."
-                                                                                                                                }
-                                                                                                                            ],
-                                                                                                                            "completed": false,
-                                                                                                                            "selected_tool": "B",
-                                                                                                                            "depth": 15,
-                                                                                                                            "result": "Result of executing task: Open the system settings or control panel application on the computer. This can typically be done by searching for 'Settings' or 'Control Panel' in the Start menu or using keyboard shortcuts like Windows key + I for Windows Settings."
-                                                                                                                        }
-                                                                                                                    ],
-                                                                                                                    "completed": false,
-                                                                                                                    "selected_tool": "B",
-                                                                                                                    "depth": 14,
-                                                                                                                    "result": "Result of executing task: Navigate to the system settings or control panel to view the current default web browser configuration on the computer."
-                                                                                                                }
-                                                                                                            ],
-                                                                                                            "result": "Result of executing task: Determine the current default web browser application set on the computer."
-                                                                                                        }
-                                                                                                    ],
-                                                                                                    "completed": false,
-                                                                                                    "selected_tool": "B",
-                                                                                                    "depth": 12,
-                                                                                                    "result": "Result of executing task: Launch the default web browser application on the computer"
-                                                                                                }
-                                                                                            ],
-                                                                                            "completed": false,
-                                                                                            "selected_tool": "B",
-                                                                                            "depth": 11,
-                                                                                            "result": "Result of executing task: Open a web browser application on the computer"
-                                                                                        }
-                                                                                    ]
-                                                                                }
-                                                                            ],
-                                                                            "completed": false,
-                                                                            "selected_tool": "C",
-                                                                            "depth": 9,
-                                                                            "result": "Result of executing task: Open a web browser and navigate to the official Federal Election Commission (FEC) website at www.fec.gov."
-                                                                        }
-                                                                    ],
-                                                                    "completed": false,
-                                                                    "selected_tool": "D",
-                                                                    "depth": 8
-                                                                }
-                                                            ],
-                                                            "selected_tool": "D",
-                                                            "depth": 7,
-                                                            "result": "Result of executing task: Identify and compile a list of relevant resources from the Federal Election Commission (FEC) website related to the most recent US presidential election, including official reports, data, and guidance documents."
-                                                        }
-                                                    ],
-                                                    "selected_tool": "D",
-                                                    "depth": 6,
-                                                    "result": "Result of executing task: Research and compile a list of official federal government websites and resources that provide reliable information about the most recent US presidential election, focusing on sources such as the Federal Election Commission, Election Assistance Commission, and other relevant federal agencies."
-                                                }
-                                            ],
-                                            "completed": false,
-                                            "selected_tool": "D",
-                                            "depth": 5,
-                                            "result": "Result of executing task: Research and compile a list of official government websites and resources that provide reliable information about the most recent US presidential election. Focus on authoritative sources such as federal election commissions, state election boards, and official government archives."
-                                        }
-                                    ],
-                                    "completed": false,
-                                    "selected_tool": "A",
-                                    "depth": 4
-                                }
-                            ],
-                            "completed": false,
-                            "selected_tool": "A",
-                            "depth": 3,
-                            "result": "Result of executing task: Research and identify the date of the most recent US presidential election that occurred prior to February 15, 2025."
-                        }
-                    ],
-                    "completed": false,
-                    "selected_tool": "A",
-                    "depth": 2,
-                    "result": "Result of executing task: Research and identify who is serving as the President of the United States on February 15, 2025."
-                }
-            ],
-            "completed": false,
-            "selected_tool": "D",
-            "depth": 1
+            "link_id": "travel_requirements",
+            "link_name": "Travel Requirements",
+            "link_description": "Information about the desired travel dates, origin, and destination",
+            "data_type": "dict",
+            "data_source_type": "console"
         }
     ],
-    "selected_tool": "A",
-    "depth": 0
+    "produces": [
+        {
+            "link_id": "booking_confirmation",
+            "link_name": "Booking Confirmation",
+            "link_description": "Confirmation details of the booked flight",
+            "data_type": "dict",
+            "data_source_type": "task"
+        }
+    ],
+    "subtasks": [
+        {
+            "task_id": "determine_travel_dates",
+            "task_name": "Determine specific travel dates",
+            "task_description": "Identify the exact dates for travel next week",
+            "ingests": [
+                {
+                    "link_id": "travel_requirements",
+                    "link_name": "Travel Requirements",
+                    "link_description": "Information about the desired travel dates",
+                    "data_type": "dict",
+                    "data_source_type": "console"
+                }
+            ],
+            "produces": [
+                {
+                    "link_id": "travel_dates",
+                    "link_name": "Travel Dates",
+                    "link_description": "Specific dates for the flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ]
+        },
+        {
+            "task_id": "search_flights",
+            "task_name": "Search for available flights",
+            "task_description": "Find available flights from Hawaii to San Francisco for the specified dates",
+            "ingests": [
+                {
+                    "link_id": "travel_dates",
+                    "link_name": "Travel Dates",
+                    "link_description": "Specific dates for the flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ],
+            "produces": [
+                {
+                    "link_id": "flight_options",
+                    "link_name": "Flight Options",
+                    "link_description": "List of available flights",
+                    "data_type": "list",
+                    "data_source_type": "task"
+                }
+            ]
+        },
+        {
+            "task_id": "select_flight",
+            "task_name": "Select a flight",
+            "task_description": "Choose the most suitable flight from the available options",
+            "ingests": [
+                {
+                    "link_id": "flight_options",
+                    "link_name": "Flight Options",
+                    "link_description": "List of available flights",
+                    "data_type": "list",
+                    "data_source_type": "task"
+                }
+            ],
+            "produces": [
+                {
+                    "link_id": "selected_flight",
+                    "link_name": "Selected Flight",
+                    "link_description": "Details of the chosen flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ]
+        },
+        {
+            "task_id": "gather_passenger_info",
+            "task_name": "Gather passenger information",
+            "task_description": "Collect necessary details about the passenger(s)",
+            "ingests": [],
+            "produces": [
+                {
+                    "link_id": "passenger_info",
+                    "link_name": "Passenger Information",
+                    "link_description": "Details of the passenger(s) for the booking",
+                    "data_type": "dict",
+                    "data_source_type": "console"
+                }
+            ]
+        },
+        {
+            "task_id": "process_payment",
+            "task_name": "Process payment",
+            "task_description": "Handle the payment for the selected flight",
+            "ingests": [
+                {
+                    "link_id": "selected_flight",
+                    "link_name": "Selected Flight",
+                    "link_description": "Details of the chosen flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ],
+            "produces": [
+                {
+                    "link_id": "payment_confirmation",
+                    "link_name": "Payment Confirmation",
+                    "link_description": "Confirmation of successful payment",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ]
+        },
+        {
+            "task_id": "confirm_booking",
+            "task_name": "Confirm booking",
+            "task_description": "Finalize the booking and generate confirmation",
+            "ingests": [
+                {
+                    "link_id": "selected_flight",
+                    "link_name": "Selected Flight",
+                    "link_description": "Details of the chosen flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                },
+                {
+                    "link_id": "passenger_info",
+                    "link_name": "Passenger Information",
+                    "link_description": "Details of the passenger(s) for the booking",
+                    "data_type": "dict",
+                    "data_source_type": "console"
+                },
+                {
+                    "link_id": "payment_confirmation",
+                    "link_name": "Payment Confirmation",
+                    "link_description": "Confirmation of successful payment",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ],
+            "produces": [
+                {
+                    "link_id": "booking_confirmation",
+                    "link_name": "Booking Confirmation",
+                    "link_description": "Confirmation details of the booked flight",
+                    "data_type": "dict",
+                    "data_source_type": "task"
+                }
+            ]
+        }
+    ],
+    "selected_tool": "C",
+    "depth": 0,
+    "result": "Result of executing task: Search and book flights from Hawaii to San Francisco departing next week"
 }
