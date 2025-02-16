@@ -10,6 +10,9 @@ class Task(BaseModel):
     produces: List[Link] = Field(default=[], description="List of links this task produces")
     subtasks: Optional[List['Task']] = Field(default=None, description="List of subtasks")
     completed: bool = Field(default=False, description="Whether the task is completed")
+    selected_tool: Optional[str] = Field(default=None, description="Tool selected to perform the function.")
+    depth: Optional[int] = Field(default=None, description="Depth of the task in the task tree")
+    result: Optional[Any] = Field(default=None, description="The result of the task")
 
 Task.model_rebuild()
 

@@ -141,3 +141,45 @@ Only output the reasoning and selected option letter as described above."""
                 print(f"Error in selecting tool after {MAX_RETRIES} attempts.")
                 return None
 
+
+async def a_generate_code(task_description: str, input_schema: Dict, output_schema: Dict) -> str: #New function
+    """Generates Python code for a given task, considering input and output schemas."""
+
+    prompt = f"""You are a Python code generator. Generate a standalone Python function that performs the following task: {task_description}
+
+The function should:
+- Take inputs according to the following JSON schema: {json.dumps(input_schema)}
+- Produce an output named "final_code_output_json" that adheres to the following JSON schema: {json.dumps(output_schema)}
+- Be well-commented and easy to understand.
+- Import any libraries that it may need.
+
+Output ONLY the complete Python function code, including imports and function definition. Do not include any surrounding text or explanations."""
+    try:
+        messages = [HumanMessage(content=prompt)]
+        response = await chat_model.ainvoke(messages)
+        code = response.content.strip()
+        assert "final_code_output_json" in code
+        return code
+    except Exception as e:
+        print(f"Code generation failed: {e}")
+        return None
+
+async def a_generate_llm_prompt(task_description: str, inputs: Dict, output_schema: Dict) -> str: #New function
+    """Generates a prompt for a given task given its description, considering input and output schemas."""
+
+    prompt = f"""You are a LLM prompt generator. Generate a prompt that can be used for this task: {task_description}
+
+The prompt should instruct the LLM to:
+- Take the following inputs: {json.dumps(inputs)}
+- Produce an output that adheres to the following JSON schema: {json.dumps(output_schema)}
+- Consider the context and what will enable the best reasoning and most accurate search.
+
+Output ONLY the prompt. Do not include any surrounding text or explanations."""
+    try:
+        messages = [HumanMessage(content=prompt)]
+        response = await chat_model.ainvoke(messages)
+        code = response.content.strip()
+        return code
+    except Exception as e:
+        print(f"Prompt generation failed: {e}")
+        return None
