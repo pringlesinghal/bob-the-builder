@@ -2,8 +2,8 @@ import React from 'react';
 import { BaseEdge } from '@xyflow/react';
 
 function BranchedEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }) {
-  // Calculate branching point (40% down from source)
-  const branchY = sourceY + (targetY - sourceY) * 0.4;
+  // Calculate branching point (45% down from source)
+  const branchY = sourceY + (targetY - sourceY) * 0.45;
   
   // Calculate control points for smooth curve
   const controlY = branchY + (targetY - branchY) * 0.5;
@@ -19,9 +19,9 @@ function BranchedEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targ
     <BaseEdge
       path={path}
       style={{
-        strokeWidth: 2,
+        strokeWidth: 4,
         stroke: '#2563eb',
-        strokeDasharray: '4',
+        strokeDasharray: '10 20',
       }}
     />
   );

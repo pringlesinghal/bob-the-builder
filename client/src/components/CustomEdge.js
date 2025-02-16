@@ -12,12 +12,12 @@ const getCustomPath = ({ sourceX, sourceY, targetX, targetY, data }) => {
   const nodeDistance = Math.abs(targetIndex - sourceIndex);
   
   // Increase curve height for nodes that are further apart
-  const baseHeight = distance * 0.6; // Increased base height
-  const heightMultiplier = nodeDistance > 1 ? 2 : 1.2; // Increased multipliers
-  const curveHeight = -Math.min(baseHeight * heightMultiplier, 200); // Increased max height
+  const baseHeight = distance * 1.8; // Doubled base height
+  const heightMultiplier = nodeDistance > 1 ? 4.5 : 1.2; // Much higher for longer edges, shorter for adjacent
+  const curveHeight = -Math.min(baseHeight * heightMultiplier, 800); // Increased max height for longer curves
   
   // Adjust control points based on node distance
-  const spreadMultiplier = nodeDistance > 1 ? 0.4 : 0.25; // Increased spread
+  const spreadMultiplier = nodeDistance > 1 ? 0.6 : 0.4; // Increased spread significantly
   const controlPoint1X = sourceX + distance * spreadMultiplier;
   const controlPoint2X = targetX - distance * spreadMultiplier;
   const controlPointY = sourceY + curveHeight;

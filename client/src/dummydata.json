@@ -1,151 +1,227 @@
-[
-  {
-    "task_id": "1",
-    "task_name": "Task 1",
-    "task_description": "Initial Task",
-    "dependencies": [],
-    "produces": [
+{
+  "task_id": "become_successful_dj_2years",
+  "task_name": "Become the Most Successful DJ in 2 Years",
+  "task_description": "Create and execute a comprehensive plan to become the most successful DJ within a 2-year timeframe, focusing on skill development, networking, brand building, and career advancement in the music industry.",
+  "ingests": [],
+  "produces": [],
+  "subtasks": [
       {
-        "link_id": "link1_1",
-        "link_name": "Output 1",
-        "link_description": "First output",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 1"
-      }
-    ],
-    "completed": true,
-    "subtasks": [
-      {
-        "task_id": "1_1",
-        "task_name": "Subtask A",
-        "task_description": "Subtask A of Task 1",
-        "dependencies": [],
-        "produces": [],
-        "completed": false
+          "task_id": "master_dj_skills",
+          "task_name": "Master DJ Skills and Techniques",
+          "task_description": "Develop and refine essential DJ skills including mixing, beatmatching, music selection, and crowd reading through consistent practice and learning.",
+          "ingests": [],
+          "produces": [            
+            {
+            "link_id": "link3_1",
+            "link_name": "Output 1",
+            "link_description": "Third output",
+            "data_type": "string",
+            "data_source_type": "local",
+            "value": "Value 3"
+          }
+        ],
+          "subtasks": [],
+          "completed": false,
+          "selected_tool": "B",
+          "depth": 1,
+          "result": "Result of executing task: Develop and refine essential DJ skills including mixing, beatmatching, music selection, and crowd reading through consistent practice and learning."
       },
       {
-        "task_id": "1_2",
-        "task_name": "Subtask B",
-        "task_description": "Subtask B of Task 1",
-        "dependencies": [],
-        "produces": [],
-        "completed": false
-      }
-    ]
-  },
-  {
-    "task_id": "2",
-    "task_name": "Task 2",
-    "task_description": "Second Task",
-    "dependencies": ["1"],
-    "produces": [
-      {
-        "link_id": "link2_1",
-        "link_name": "Output 1",
-        "link_description": "Second output",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 2"
-      }
-    ],
-    "completed": false,
-    "subtasks": [
-      {
-        "task_id": "2_1",
-        "task_name": "Subtask C",
-        "task_description": "Subtask C of Task 2",
-        "dependencies": ["1_2"],
-        "produces": [],
-        "completed": false
-      }
-    ]
-  },
-  {
-    "task_id": "3",
-    "task_name": "Task 3",
-    "task_description": "Third Task",
-    "dependencies": ["1", "2"],
-    "produces": [
-      {
-        "link_id": "link3_1",
-        "link_name": "Output 1",
-        "link_description": "Third output",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 3"
+          "task_id": "build_brand_presence",
+          "task_name": "Build Strong Brand and Online Presence",
+          "task_description": "Create a unique DJ identity, develop a professional website, and establish a strong presence on social media platforms to increase visibility and attract fans.",
+          "ingests": [            
+            {
+            "link_id": "link3_1",
+            "link_name": "Output 1",
+            "link_description": "Third output",
+            "data_type": "string",
+            "data_source_type": "local",
+            "value": "Value 3"
+          }],
+          "produces": 
+          [ 
+
+          {
+            "link_id": "link3_2",
+            "link_name": "Output 2",
+            "link_description": "Second output",
+            "data_type": "string",
+            "data_source_type": "local",
+            "value": "Value 3"
+          }
+        ],
+          "subtasks": [],
+          "completed": false,
+          "selected_tool": "A",
+          "depth": 1,
+          "result": "Result of executing task: Create a unique DJ identity, develop a professional website, and establish a strong presence on social media platforms to increase visibility and attract fans."
       },
       {
-        "link_id": "link3_2",
-        "link_name": "Output 3_",
-        "link_description": "Third output2",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 1331"
-      }
-    ],
-    "completed": false,
-    "subtasks": []
-  },
-  {
-    "task_id": "4",
-    "task_name": "Task 4",
-    "task_description": "Fourth Task",
-    "dependencies": ["2", "3"],
-    "produces": [
-      {
-        "link_id": "link4_1",
-        "link_name": "Output 1",
-        "link_description": "Fourth output",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 4"
-      }
-    ],
-    "completed": false,
-    "subtasks": [
-      {
-        "task_id": "4_1",
-        "task_name": "Subtask D",
-        "task_description": "Subtask D of Task 4",
-        "dependencies": [],
-        "produces": [],
-        "completed": false
+          "task_id": "network_industry_connections",
+          "task_name": "Network and Build Industry Connections",
+          "task_description": "Attend music events, collaborate with other artists, and engage with industry professionals to expand your network and create opportunities for career advancement.",
+          "ingests": [],
+          "produces": [],
+          "subtasks": [],
+          "completed": false,
+          "selected_tool": "A",
+          "depth": 1,
+          "result": "Result of executing task: Attend music events, collaborate with other artists, and engage with industry professionals to expand your network and create opportunities for career advancement."
       },
       {
-        "task_id": "4_2",
-        "task_name": "Subtask E",
-        "task_description": "Subtask E of Task 4",
-        "dependencies": [],
-        "produces": [],
-        "completed": false
+          "task_id": "produce_original_music",
+          "task_name": "Create and Promote Original Music",
+          "task_description": "Produce original tracks, remixes, and mashups, and promote them through various channels to establish yourself as a creative artist in the industry.",
+          "ingests": [],
+          "produces": [],
+          "subtasks": [
+              {
+                  "task_id": "compose_produce_tracks",
+                  "task_name": "Compose and Produce Original Tracks",
+                  "task_description": "Create original music compositions and produce high-quality tracks, including remixes and mashups, to showcase your artistic style and technical skills.",
+                  "ingests": [],
+                  "produces": [],
+                  "subtasks": [
+                      {
+                          "task_id": "brainstorm_concepts",
+                          "task_name": "Brainstorm Track Concepts",
+                          "task_description": "Generate ideas for original tracks, including themes, genres, and overall sound aesthetics. Create a list of potential track concepts to guide the composition process.",
+                          "ingests": [],
+                          "produces": [],
+                          "subtasks": [],
+                          "completed": false,
+                          "selected_tool": "A",
+                          "depth": 3,
+                          "result": "Result of executing task: Generate ideas for original tracks, including themes, genres, and overall sound aesthetics. Create a list of potential track concepts to guide the composition process."
+                      },
+                      {
+                          "task_id": "compose_core_elements",
+                          "task_name": "Compose Core Musical Elements",
+                          "task_description": "Create the fundamental musical components of each track, such as melodies, chord progressions, and basic rhythms. Focus on developing the main musical ideas that will form the backbone of the compositions.",
+                          "ingests": [],
+                          "produces": [],
+                          "subtasks": [],
+                          "completed": false,
+                          "selected_tool": "A",
+                          "depth": 3,
+                          "result": "Result of executing task: Create the fundamental musical components of each track, such as melodies, chord progressions, and basic rhythms. Focus on developing the main musical ideas that will form the backbone of the compositions."
+                      },
+                      {
+                          "task_id": "sound_design",
+                          "task_name": "Develop Sound Design",
+                          "task_description": "Create or select unique sounds, synthesizer patches, and samples that fit the track concepts. Experiment with sound design techniques to craft a distinctive sonic palette for each composition.",
+                          "ingests": [],
+                          "produces": [],
+                          "subtasks": [],
+                          "completed": false,
+                          "selected_tool": "B",
+                          "depth": 3,
+                          "result": "Result of executing task: Create or select unique sounds, synthesizer patches, and samples that fit the track concepts. Experiment with sound design techniques to craft a distinctive sonic palette for each composition."
+                      },
+                      {
+                          "task_id": "arrange_tracks",
+                          "task_name": "Arrange and Structure Tracks",
+                          "task_description": "Organize the musical elements into coherent structures, determining the flow and progression of each track. Create dynamic arrangements that maintain listener interest throughout the composition.",
+                          "ingests": [],
+                          "produces": [],
+                          "subtasks": [],
+                          "completed": false,
+                          "selected_tool": "B",
+                          "depth": 3,
+                          "result": "Result of executing task: Organize the musical elements into coherent structures, determining the flow and progression of each track. Create dynamic arrangements that maintain listener interest throughout the composition."
+                      },
+                      {
+                          "task_id": "produce_finalize",
+                          "task_name": "Produce and Finalize Tracks",
+                          "task_description": "Apply production techniques to refine and enhance the tracks. This includes mixing, adding effects, balancing elements, and mastering to achieve a polished, professional sound quality.",
+                          "ingests": [],
+                          "produces": [],
+                          "subtasks": [],
+                          "completed": false,
+                          "selected_tool": "C",
+                          "depth": 3,
+                          "result": "Result of executing task: Apply production techniques to refine and enhance the tracks. This includes mixing, adding effects, balancing elements, and mastering to achieve a polished, professional sound quality."
+                      }
+                  ],
+                  "completed": false,
+                  "selected_tool": "D",
+                  "depth": 2
+              },
+              {
+                  "task_id": "refine_sound_quality",
+                  "task_name": "Refine Sound Quality and Production Techniques",
+                  "task_description": "Continuously improve your production skills, focusing on sound design, mixing, and mastering to ensure your tracks meet industry standards.",
+                  "ingests": [],
+                  "produces": [],
+                  "subtasks": [],
+                  "completed": false,
+                  "selected_tool": "B",
+                  "depth": 2,
+                  "result": "Result of executing task: Continuously improve your production skills, focusing on sound design, mixing, and mastering to ensure your tracks meet industry standards."
+              },
+              {
+                  "task_id": "develop_promotion_strategy",
+                  "task_name": "Develop a Comprehensive Promotion Strategy",
+                  "task_description": "Create a marketing plan that includes social media promotion, music blog outreach, and playlist pitching to increase visibility and reach of your music.",
+                  "ingests": [],
+                  "produces": [],
+                  "subtasks": [],
+                  "completed": false,
+                  "selected_tool": "B",
+                  "depth": 2,
+                  "result": "Result of executing task: Create a marketing plan that includes social media promotion, music blog outreach, and playlist pitching to increase visibility and reach of your music."
+              },
+              {
+                  "task_id": "distribute_music",
+                  "task_name": "Distribute Music Across Platforms",
+                  "task_description": "Use digital distribution services to make your music available on major streaming platforms and online music stores.",
+                  "ingests": [],
+                  "produces": [],
+                  "subtasks": [],
+                  "completed": false,
+                  "selected_tool": "A",
+                  "depth": 2,
+                  "result": "Result of executing task: Use digital distribution services to make your music available on major streaming platforms and online music stores."
+              },
+              {
+                  "task_id": "perform_network",
+                  "task_name": "Perform Live and Network in the Industry",
+                  "task_description": "Book gigs, perform at events, and network with other artists, producers, and industry professionals to build your reputation and create opportunities.",
+                  "ingests": [],
+                  "produces": [],
+                  "subtasks": [],
+                  "completed": false,
+                  "selected_tool": "A",
+                  "depth": 2,
+                  "result": "Result of executing task: Book gigs, perform at events, and network with other artists, producers, and industry professionals to build your reputation and create opportunities."
+              }
+          ],
+          "completed": false,
+          "selected_tool": "D",
+          "depth": 1
       },
       {
-        "task_id": "4_3",
-        "task_name": "Subtask F",
-        "task_description": "Subtask F of Task 4",
-        "dependencies": [],
-        "produces": [],
-        "completed": false
+          "task_id": "secure_high_profile_gigs",
+          "task_name": "Secure and Perform at High-Profile Gigs",
+          "task_description": "Actively seek out and secure performances at well-known venues, festivals, and events to increase exposure and build your reputation as a top DJ.",
+          "ingests": [ {
+            "link_id": "link3_1",
+            "link_name": "Output 1",
+            "link_description": "Third output",
+            "data_type": "string",
+            "data_source_type": "local",
+            "value": "Value 3"
+          }],
+          "produces": [],
+          "subtasks": [],
+          "completed": false,
+          "selected_tool": "A",
+          "depth": 1,
+          "result": "Result of executing task: Actively seek out and secure performances at well-known venues, festivals, and events to increase exposure and build your reputation as a top DJ."
       }
-    ]
-  },
-  {
-    "task_id": "5",
-    "task_name": "Task 5",
-    "task_description": "Fifth Task",
-    "dependencies": ["3", "4"],
-    "produces": [
-      {
-        "link_id": "link5_1",
-        "link_name": "Output 1",
-        "link_description": "Fifth output",
-        "data_type": "string",
-        "data_source_type": "local",
-        "value": "Value 5"
-      }
-    ],
-    "completed": false,
-    "subtasks": []
-  }
-]
+  ],
+  "completed": false,
+  "selected_tool": "D",
+  "depth": 0
+}
