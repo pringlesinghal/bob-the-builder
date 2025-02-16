@@ -32,7 +32,6 @@ async def a_transform_prompt(prompt: str, schema: Dict, parent_context: str = ""
 
 async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) -> List[Dict]:
     schema_string = json.dumps(schema)
-    open("task.txt", "w").write(str(task))
     task_dict = json.dumps(task)
     system_message = SystemMessage(content="You are an AI assistant specialized in task decomposition.")
     human_message = HumanMessage(content=f"Given the task JSON:\n{task_dict}\nReturn a list of independent subtasks (maximum {MAX_SUBTASKS}). Avoid overly detailed steps; keep instructions general but actionable. Each subtask should be JSON formatted as follows:\n{schema_string}\n\nParent context: {parent_context}\n\nFirst, provide your reasoning for how you'll approach breaking down this task. Then, output the list of subtasks in JSON format. Each subtask JSON should have 'subtasks' set to [] (empty list).\n\nFormat your response as follows:\nReasoning: [Your reasoning here]\nAction: [JSON list of up to {MAX_SUBTASKS}subtasks]\n\nOnly output the reasoning and JSON list of subtasks as described above.")
@@ -46,7 +45,6 @@ async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) ->
             reasoning, action = response_content.split("Action:", 1)
             subtasks_json_string = action.strip()
             subtasks = json.loads(subtasks_json_string)
-            print(f"{subtasks=}")
             # TODO: handle this exception better
             if len(subtasks) > MAX_SUBTASKS:
                 raise ValueError(f"More than {MAX_SUBTASKS} subtasks generated.")
@@ -61,7 +59,6 @@ async def a_decompose_subtasks(task: Dict, schema: Dict, parent_context: str) ->
 
 async def a_select_tool(subtask: Dict, schema: Dict, depth: int, max_depth: int) -> str:
     schema_string = json.dumps(schema)
-    print(f"{subtask['subtasks']=}")
     subtask_dict = json.dumps(subtask)
     human_message = HumanMessage(content=f"""Given the subtask JSON:
 {subtask_dict}

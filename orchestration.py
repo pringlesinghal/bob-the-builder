@@ -21,35 +21,34 @@ async def a_generate_task_tree(prompt: str, schema: Dict, task_manager: TaskMana
         if task_manager.get_task_count() >= task_manager.max_tasks:
             break
 
-        selected_tool = await a_select_tool(task, schema, current_depth, max_depth)
+        selected_tool = await a_select_tool(current_task, schema, current_depth, max_depth)
         if not selected_tool:
             continue
 
-        task['selected_tool'] = selected_tool
-        task['depth'] = current_depth
+        current_task['selected_tool'] = selected_tool
+        current_task['depth'] = current_depth
 
-        if not task_manager.add_task(task):
+        if not task_manager.add_task(current_task):
             break
 
         if root_task is None:
-            root_task = task
+            root_task = current_task
 
         if parent_task:
             if 'subtasks' not in parent_task:
                 parent_task['subtasks'] = []
-            parent_task['subtasks'].append(task)
+            parent_task['subtasks'].append(current_task)
 
         if current_depth not in tasks_by_depth:
             tasks_by_depth[current_depth] = []
-        tasks_by_depth[current_depth].append(task)
-
+        tasks_by_depth[current_depth].append(current_task)
         if selected_tool == 'D':  # Only decompose if "Mix of Tools" is selected
-            subtasks = await a_decompose_subtasks(task, schema, parent_context)
+            subtasks = await a_decompose_subtasks(current_task, schema, parent_context)
             if subtasks:
-                new_parent_context = f"{parent_context}\nParent task: {task['task_description']}"
+                new_parent_context = f"{parent_context}\nParent task: {current_task['task_description']}"
                 for subtask in subtasks:
-                    task_queue.append((subtask, current_depth + 1, task, new_parent_context))
+                    task_queue.append((subtask, current_depth + 1, current_task, new_parent_context))
         else:
-            task['result'] = execute_task(task)
+            current_task['result'] = execute_task(current_task)
 
     return root_task, tasks_by_depth
